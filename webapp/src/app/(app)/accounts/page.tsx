@@ -129,7 +129,7 @@ export default function AccountsPage() {
             );
           })}
           <input
-            className="input compact ml-auto min-w-[220px] max-w-xs"
+            className="input compact w-full sm:w-auto sm:ml-auto sm:min-w-[220px] sm:max-w-xs"
             placeholder="Cari email / user id…"
             value={q}
             onChange={(e) => setQ(e.target.value)}

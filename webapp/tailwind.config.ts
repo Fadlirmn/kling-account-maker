@@ -62,7 +62,7 @@ const config: Config = {
       },
       screens: {
         ...defaultTheme.screens,
-        shell: "861px",
+        shell: "1200px",
       },
     },
   },

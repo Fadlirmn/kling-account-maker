@@ -17,7 +17,7 @@ export default async function LoginPage({
     <main className="login">
       <header className="login-bar">
         <span className="login-brand">
-          <Image src="/logo/kurma-logo.png" alt="Kurma Group" width={28} height={28} priority />
+          <Image src="/logo/kling-icon.svg" alt="Kling Account Maker" width={28} height={28} priority />
           {APP}
         </span>
         <ThemeToggle />
@@ -27,7 +27,7 @@ export default async function LoginPage({
         <form method="post" action="/api/auth/login" className="login-card">
           <input type="hidden" name="next" value={next ?? "/"} />
           <div className="login-head">
-            <Image src="/logo/kurma-logo.png" alt="" width={40} height={40} className="login-logo" />
+            <Image src="/logo/kling-icon.svg" alt="" width={40} height={40} className="login-logo" />
             <h1 className="h5">Masuk ke Console</h1>
             <p className="caption text-text2">Akses dashboard khusus tim internal.</p>
           </div>

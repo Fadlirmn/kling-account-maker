@@ -287,6 +287,15 @@ export function Metrics({ children, className = "" }: { children: ReactNode; cla
 }
 
 /* ===== Avatar inisial ===== */
+const AVATAR_COLORS = ["#FF6B57", "#5B4BE0", "#12A06A", "#CC8A14", "#2D6CC0", "#D6456B", "#0E9AA7", "#7C3AED"];
+
+/** Warna solid deterministik dari nama (bukan gradient): nama sama → warna sama. */
+export function avatarColor(name: string): string {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
 export function Avatar({ name, big, className = "" }: { name: string; big?: boolean; className?: string }) {
   const initials = name
     .replace(/^@/, "")
@@ -296,7 +305,7 @@ export function Avatar({ name, big, className = "" }: { name: string; big?: bool
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("") || "?";
   return (
-    <span className={`avatar ${big ? "big" : ""} ${className}`} aria-hidden="true">
+    <span className={`avatar ${big ? "big" : ""} ${className}`} style={{ background: avatarColor(name) }} aria-hidden="true">
       {initials}
     </span>
   );

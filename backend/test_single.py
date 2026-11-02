@@ -35,7 +35,7 @@ async def main() -> int:
     sys.stdout.reconfigure(line_buffering=True)
     p = argparse.ArgumentParser(description=f"Test single {config.SITE_NAME} account creation")
     p.add_argument("email", nargs="?", help="Email yang sudah ada (butuh --mode webhook/local_tempmail). Kosong = generate.")
-    p.add_argument("--mode", choices=["kurmamail", "webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"])
+    p.add_argument("--mode", choices=["webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"])
     p.add_argument("--save", action="store_true", help="Simpan hasil ke DB + results file")
     args = p.parse_args()
 
@@ -47,8 +47,8 @@ async def main() -> int:
     from core.runner import create_one
 
     if args.email:
-        if mode not in ("kurmamail", "webhook", "local_tempmail"):
-            err("Email manual hanya untuk --mode kurmamail/webhook/local_tempmail"); return 2
+        if mode not in ("webhook", "local_tempmail"):
+            err("Email manual hanya untuk --mode webhook/local_tempmail"); return 2
         client = _FixedEmail(args.email.strip(), mode)
     else:
         client = make_mail_client(mode)

@@ -108,3 +108,18 @@ def test_decide():
     assert runner._decide("PROXY_FLAGGED", None) == (True, 15)
     assert runner._decide("email input not found", None) == (True, 5)
     assert runner._decide("aborted", None) == (False, 0)
+
+
+def test_run_batch_provider_eksplisit_menang(eng, monkeypatch):
+    """settings=webhook (tanpa worker URL) tapi run diminta mailtm → validasi memakai mailtm, bukan gagal."""
+    from core import config
+    repo.save_settings(eng, {"email_provider": "webhook"})
+    monkeypatch.setattr(config, "CLOUDFLARE_WORKER_URL", "")
+    seen = {}
+
+    def slot(i, provider, max_attempts, stop, rl):
+        seen["provider"] = provider
+        return AccountResult(email="ok@x.id", success=True, status="standby")
+    _patch_slot(monkeypatch, slot)
+    rid = runner.run_batch(eng, "manual", count=1, workers=1, provider="mailtm", log=lambda _l: None)
+    assert repo.get_run(eng, rid)["status"] == "success" and seen["provider"] == "mailtm"

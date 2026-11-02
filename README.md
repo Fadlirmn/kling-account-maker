@@ -70,7 +70,7 @@ Sebelum ada akun, semua blok menampilkan `Data riil <objek> akan tampil di sini 
 ┌──────────────────────────────────────────────────────────────┐
 │ webapp (Next.js 15)  127.0.0.1:3201                          │
 │  pages: /, /accounts, /settings, /settings/logs,             │
-│         /settings/logs/[id], /settings/users                 │
+│         /settings/users, /settings/testing (admin)           │
 │  middleware: session cookie HMAC (7 hari), proteksi /api/*   │
 │  proxy: /api/backend/* → http://backend:8000/api/*           │
 └──────────────────────────────┬───────────────────────────────┘
@@ -78,8 +78,9 @@ Sebelum ada akun, semua blok menampilkan `Data riil <objek> akan tampil di sini 
 ┌──────────────────────────────┴───────────────────────────────┐
 │ backend (FastAPI + APScheduler)  127.0.0.1:8010              │
 │  api.py      REST /api/{health,summary,runs,runs/{id}/log,   │
-│              runs/stop,accounts,accounts/trend,              │
-│              accounts/export.xlsx|csv|json,settings,users}   │
+│              runs/stop,accounts,accounts/bulk,accounts/trend,│
+│              accounts/export.xlsx|csv|json,settings,users,   │
+│              test/run|diagnostics|mail}                      │
 │  scheduler   cron schedule_time (03:00 WIB) batch harian,    │
 │              interval refill sampai standby_target, purge    │
 │  core/runner run_batch: settings → proxy → BrowserSession →  │
@@ -121,9 +122,11 @@ Di compose `config.json` di-mount read-only; edit lalu `docker compose restart b
 
 ## Creator
 
-- **Pemicu**: scheduler (batch harian `schedule_time`, isi ulang ke `standby_target`) atau CLI. Tidak ada
-  tombol Run Now / `POST /api/runs`. Stop batch yang sedang jalan: `POST /api/runs/stop` (tombol Stop di topbar
-  muncul saat running; slot baru dibatalkan, attempt berjalan diselesaikan).
+- **Pemicu**: scheduler (batch harian `schedule_time`, isi ulang ke `standby_target`), CLI, atau
+  **Settings › Testing** (admin): run manual kecil (`POST /api/test/run {count, workers, provider}`), diagnostik
+  server (`GET /api/test/diagnostics`: DB, config, browser, GeoIP, Xvfb, proxy, domain, flow), dan uji provider
+  email (`POST /api/test/mail`). Stop batch: `POST /api/runs/stop` (tombol Stop muncul saat running; slot baru
+  dibatalkan, attempt berjalan diselesaikan).
 - **CLI tanpa backend**: `docker compose run --rm creator --pre-create 3` atau lokal
   `cd backend && .venv/bin/python account_creator.py --pre-create 3 --workers 2`.
 - Tiap slot: pilih provider email (fallback berantai), proxy berikutnya, launch Camoufox

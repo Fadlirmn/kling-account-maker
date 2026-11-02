@@ -233,6 +233,7 @@ def run_batch(engine, trigger: str = "manual", count: Optional[int] = None,
     workers = get_safe_workers(int(workers) if workers else int(s["workers"]))
     provider = (provider or s["email_provider"] or config.EMAIL_PROVIDER).lower()
     config.apply_runtime(s)
+    config.EMAIL_PROVIDER = provider          # provider eksplisit (CLI/Testing) menang atas settings — ikut divalidasi
     browser_mod.set_concurrency(int(s["browser_concurrency"]))
 
     run_id = repo.create_run(engine, trigger, n, workers, provider, int(s.get("config_version", 1)))

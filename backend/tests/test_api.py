@@ -56,6 +56,27 @@ def test_tanpa_trigger_manual(client):
     assert client.post("/api/runs/stop").status_code == 409                        # tidak ada batch berjalan
 
 
+def test_testing_run_guard_dan_diagnostics(client, monkeypatch):
+    calls = []
+
+    def slow_run(engine, trigger="manual", count=None, workers=None, provider=None, stop_event=None, log=print):
+        calls.append((trigger, count, workers, provider))
+        time.sleep(0.3)
+        return 1
+
+    monkeypatch.setattr(runner, "run_batch", slow_run)
+    assert client.post("/api/test/run", json={"count": 0}).status_code == 422
+    assert client.post("/api/test/run", json={"provider": "yahoo"}).status_code == 422
+    r = client.post("/api/test/run", json={"count": 2, "workers": 1, "provider": "mailtm"})
+    assert r.status_code == 202 and r.json()["count"] == 2
+    assert client.post("/api/test/run", json={}).status_code == 409
+    assert client.post("/api/runs/stop").status_code == 200
+    time.sleep(0.5)
+    assert calls == [("manual", 2, 1, "mailtm")]
+    d = client.get("/api/test/diagnostics").json()
+    assert d["db"]["ok"] is True and d["flow"]["implemented"] is False and "proxies" in d and "email" in d
+
+
 def test_runs_dan_log(client, test_engine, tmp_path, monkeypatch):
     from core import config
     monkeypatch.setattr(config, "LOG_DIR", tmp_path)

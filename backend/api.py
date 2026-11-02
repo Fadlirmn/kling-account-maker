@@ -42,6 +42,7 @@ from runlog import describe_exc
 
 ROOT = Path(__file__).resolve().parent
 TZ = "Asia/Jakarta"
+_PROVIDERS = ("webhook", "local_tempmail", "1secmail", "mailtm", "gptmail")
 
 _RUNNING = threading.Event()     # batch sedang jalan?
 _STOP = threading.Event()        # minta batch berhenti setelah attempt berjalan selesai
@@ -407,9 +408,108 @@ def set_account_status(account_id: int, body: dict):
     return repo.get_account(engine, account_id)
 
 
+# ── routes: testing (khusus admin; proxy webapp memblokir member) ────────────
+def _int_in(body: dict, key: str, lo: int, hi: int) -> int | None:
+    v = body.get(key)
+    if v is None:
+        return None
+    if not isinstance(v, int) or isinstance(v, bool) or not lo <= v <= hi:
+        raise HTTPException(status_code=422, detail=f"{key} harus bilangan bulat {lo}..{hi}")
+    return v
+
+
+@app.post("/api/test/run")
+def test_run(body: dict | None = None):
+    """Run manual untuk pengujian di server: {count?, workers?, provider?}. 202 / 409 kalau sibuk."""
+    if _RUNNING.is_set():
+        raise HTTPException(status_code=409, detail="Creator sedang berjalan")
+    body = body or {}
+    count = _int_in(body, "count", 1, 100)
+    workers = _int_in(body, "workers", 1, 8)
+    provider = body.get("provider") or None
+    if provider is not None and provider not in _PROVIDERS:
+        raise HTTPException(status_code=422, detail="provider tidak valid")
+    if not _claim_running():
+        raise HTTPException(status_code=409, detail="Creator sedang berjalan")
+    _STOP.clear()
+
+    def worker():
+        try:
+            runner.run_batch(_engine(), trigger="manual", count=count, workers=workers,
+                             provider=provider, stop_event=_STOP)
+        except Exception as e:  # noqa: BLE001
+            traceback.print_exc()
+            print(f"run_batch error: {describe_exc(e)}")
+        finally:
+            _RUNNING.clear()
+
+    threading.Thread(target=worker, daemon=True, name="test-batch").start()
+    return JSONResponse({"started": True, "trigger": "manual", "count": count, "workers": workers,
+                         "provider": provider}, status_code=202)
+
+
+@app.get("/api/test/diagnostics")
+def test_diagnostics():
+    """Cek cepat kesiapan server: DB, config, browser, GeoIP, proxy, domain, flow."""
+    engine = _engine()
+    out: dict[str, Any] = {"checked_at": datetime.now().isoformat(timespec="seconds")}
+    try:
+        with engine.connect() as con:
+            con.exec_driver_sql("SELECT 1")
+        out["db"] = {"ok": True, "backend": engine.url.get_backend_name().split("+")[0]}
+    except Exception as e:  # noqa: BLE001
+        out["db"] = {"ok": False, "error": describe_exc(e)}
+    out["config"] = {"ok": not config.validate(require_password=True), "problems": config.validate(require_password=True),
+                     "sources": config.CONFIG_SOURCES, "site": config.SITE_NAME, "signup_url": config.KLING_SIGNUP_URL}
+    try:
+        from camoufox.pkgman import launch_path, installed_verstr
+        out["browser"] = {"ok": True, "path": str(launch_path()), "version": str(installed_verstr())}
+    except Exception as e:  # noqa: BLE001
+        out["browser"] = {"ok": False, "error": describe_exc(e)}
+    try:
+        from camoufox.locale import MMDB_FILE
+        import geoip2.database
+        with geoip2.database.Reader(str(MMDB_FILE)) as r:
+            r.city("8.8.8.8")
+        out["geoip"] = {"ok": True, "path": str(MMDB_FILE)}
+    except Exception as e:  # noqa: BLE001
+        out["geoip"] = {"ok": False, "error": describe_exc(e)}
+    out["display"] = {"xvfb": bool(os.environ.get("DISPLAY")), "display": os.environ.get("DISPLAY", "")}
+    out["proxies"] = {"total": proxy_mod.proxy_count(), "bad": proxy_mod.bad_proxy_count(), "croxy": bool(config.CROXY_BASE_PROXY)}
+    out["domains"] = {"total": domains_mod.domain_count(), "banned": len(domains_mod.get_db_banned_domains())}
+    out["email"] = {"provider": config.EMAIL_PROVIDER, "chain": provider_chain_safe()}
+    out["flow"] = {"implemented": runner.flow_implemented(), "module": f"sites/{config.SITE_NAME}/flow.py"}
+    out["creator_running"] = _RUNNING.is_set()
+    out["last_run"] = repo.latest_run(engine)
+    return out
+
+
+def provider_chain_safe() -> list[str]:
+    try:
+        from core.mail import provider_chain
+        return provider_chain()
+    except Exception:  # noqa: BLE001
+        return []
+
+
+@app.post("/api/test/mail")
+def test_mail(body: dict | None = None):
+    """Uji provider email: buat 1 mailbox sementara (tanpa menunggu OTP). {provider?}"""
+    provider = (body or {}).get("provider") or None
+    if provider is not None and provider not in _PROVIDERS:
+        raise HTTPException(status_code=422, detail="provider tidak valid")
+    from core.mail import make_mail_client
+    disabled: set[str] = set()
+    t0 = datetime.now()
+    client = make_mail_client(provider, disabled)
+    ms = int((datetime.now() - t0).total_seconds() * 1000)
+    if client is None:
+        return {"ok": False, "provider": provider, "tried_failed": sorted(disabled), "ms": ms}
+    return {"ok": True, "provider": client.mode, "email": client.email, "skipped": sorted(disabled), "ms": ms}
+
+
 # ── routes: settings ─────────────────────────────────────────────────────────
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
-_PROVIDERS = ("webhook", "local_tempmail", "1secmail", "mailtm", "gptmail")
 _INT_RANGES = (("workers", 1, 16), ("batch_size", 1, 500), ("max_daily_success", 1, 100000),
                ("standby_target", 0, 100000), ("refill_interval_minutes", 0, 1440),
                ("schedule_jitter_minutes", 0, 120), ("max_attempts_per_slot", 1, 20),

@@ -46,7 +46,7 @@ scheduler atau CLI.
 | Browser | Camoufox 0.4.11 (Firefox anti-detect, geoip dari proxy) · Playwright 1.60 · Xvfb `:99` di container |
 | Email/OTP | Cloudflare Email Routing → Worker (webhook), Go TempMail, 1secmail, mail.tm, GPTMail |
 | Frontend | Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind CSS 3 (token CSS var) · Recharts · Material Symbols |
-| Auth | Cookie sesi HMAC-SHA256 (Web Crypto, edge middleware) · user tambahan scrypt di tabel `users` |
+| Auth | Cookie sesi HMAC-SHA256 (Web Crypto, edge middleware) · user tabel `users` (scrypt) dengan role **admin** / **member**; role dicek live tiap request. Member hanya distribusi akun: halaman Accounts, tandai dipakai/belum, export, unduh cookies — tanpa Dashboard/Settings/User, hapus, atau ubah status |
 | Runtime | Docker Compose (`kling-backend` 8010, `kling-webapp` 3201, profile `creator`) · Node 22 alpine · python:3.11-slim |
 | Konfigurasi | `backend/config.json` (non-rahasia) · `.env` (kredensial) · tabel `settings` (runtime dari dashboard) |
 

@@ -9,11 +9,17 @@ import { Avatar, IconButton, Pill } from "./ui";
 import { ThemeToggle } from "./ThemeToggle";
 import { useConfirm } from "./Dialog";
 import { linkActive, NAV_SECTIONS } from "./nav";
+import { useRole } from "./Shell";
 import { fmtDateTime, relTime, type Summary } from "@/lib/api";
 
 export function Sidebar({ open, user = "admin", summary }: { open: boolean; user?: string; summary: Summary | null }) {
   const path = usePathname();
   const confirm = useConfirm();
+  const role = useRole();
+  const isAdmin = role === "admin";
+  const sections = isAdmin
+    ? NAV_SECTIONS
+    : NAV_SECTIONS.map((s) => ({ ...s, items: s.items.filter((l) => l.href === "/accounts") })).filter((s) => s.items.length > 0);
   const logoutForm = useRef<HTMLFormElement>(null);
 
   const run = summary?.last_run ?? null;
@@ -36,7 +42,7 @@ export function Sidebar({ open, user = "admin", summary }: { open: boolean; user
       </div>
 
       <nav className="sb-nav">
-        {NAV_SECTIONS.map((s) => (
+        {sections.map((s) => (
           <div key={s.label} className="contents">
             <span className="nav-section">{s.label}</span>
             {s.items.map((l) => {
@@ -78,11 +84,11 @@ export function Sidebar({ open, user = "admin", summary }: { open: boolean; user
       </div>
 
       <div className="sb-footer">
-        <Link href="/settings/users" className="sb-user" title="Akun dashboard">
+        <Link href={isAdmin ? "/settings/users" : "/accounts"} className="sb-user" title={isAdmin ? "Akun dashboard" : "Distribusi akun"}>
           <Avatar name={user} />
           <span className="flex flex-col min-w-0">
             <span className="sb-name el">{user}</span>
-            <span className="caption el">Administrator</span>
+            <span className="caption el">{isAdmin ? "Administrator" : "Member · distribusi akun"}</span>
           </span>
         </Link>
         <ThemeToggle />

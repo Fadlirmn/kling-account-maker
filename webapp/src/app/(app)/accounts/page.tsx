@@ -7,6 +7,7 @@ import { Empty } from "@/components/Empty";
 import { FilterChip } from "@/components/bits";
 import { useConfirm } from "@/components/Dialog";
 import { AccountDialog } from "@/components/AccountDialog";
+import { useIsAdmin } from "@/components/Shell";
 import { Icon } from "@/components/Icon";
 import { apiGet, apiPost, fmtDateTime, type AccountStatus, type AccountsPage } from "@/lib/api";
 import { idFull } from "@/lib/format";
@@ -35,6 +36,7 @@ type BulkResult = { ok: boolean; action: string; affected: number };
 
 export default function AccountsPage() {
   const confirm = useConfirm();
+  const isAdmin = useIsAdmin();
   const [usage, setUsage] = useState<Usage | "">("");
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
@@ -101,7 +103,7 @@ export default function AccountsPage() {
   return (
     <>
       <PageBar
-        meta={data ? `${idFull(total)} akun${usageLabel ? ` · ${usageLabel}` : ""}${qDebounced ? ` · cari "${qDebounced}"` : ""} · centang untuk aksi massal, klik baris untuk detail` : "Memuat…"}
+        meta={data ? `${idFull(total)} akun${usageLabel ? ` · ${usageLabel}` : ""}${qDebounced ? ` · cari "${qDebounced}"` : ""} · centang untuk ${isAdmin ? "aksi massal" : "tandai dipakai / export"}, klik baris untuk detail` : "Memuat…"}
         right={
           <>
             <span className="caption text-text3 hidden sm:inline">Export {exportLabel}:</span>
@@ -143,7 +145,7 @@ export default function AccountsPage() {
             <Pill tone="violet">{checked.size} akun dipilih</Pill>
             <Button variant="outlined" size="sm" icon="task_alt" disabled={busy} onClick={() => bulk("mark_used")}>Tandai sudah dipakai</Button>
             <Button variant="outlined" size="sm" icon="undo" disabled={busy} onClick={() => bulk("mark_unused")}>Tandai belum dipakai</Button>
-            <Button variant="danger" size="sm" icon="delete" disabled={busy} onClick={() => bulk("delete")}>Hapus</Button>
+            {isAdmin && <Button variant="danger" size="sm" icon="delete" disabled={busy} onClick={() => bulk("delete")}>Hapus</Button>}
             <Button variant="text" size="sm" onClick={() => setChecked(new Set())}>Batal pilih</Button>
           </div>
         </Card>

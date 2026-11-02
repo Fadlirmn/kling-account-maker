@@ -520,4 +520,6 @@ def verify_login(body: dict):
 
 @app.get("/api/auth/user-exists")
 def auth_user_exists(username: str = Query(..., min_length=1, max_length=64)):
-    return {"exists": repo.user_exists(_engine(), username)}
+    """Dipanggil middleware webapp tiap request: user masih ada? + role terkini (hak akses live)."""
+    u = next((x for x in repo.list_users(_engine()) if x["username"] == username), None)
+    return {"exists": u is not None, "role": (u or {}).get("role")}

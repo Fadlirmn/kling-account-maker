@@ -6,6 +6,7 @@ import { Dialog, useConfirm } from "./Dialog";
 import { Field, Select } from "./form";
 import { Button, IconButton, KV, Pill, type Tone } from "./ui";
 import { ACCOUNT_STATUSES, apiGet, apiPut, fmtDateTime, type Account, type AccountStatus } from "@/lib/api";
+import { useIsAdmin } from "./Shell";
 
 export const STATUS_TONE: Record<AccountStatus, Tone> = {
   pending: "neutral", standby: "success", active: "info", exhausted: "warn", used: "neutral", banned: "err", failed: "err",
@@ -18,6 +19,7 @@ export function StatusPill({ status, sm = true }: { status: AccountStatus; sm?: 
 /** Detail satu akun + ubah status + unduh cookies. */
 export function AccountDialog({ accountId, onClose, onChanged }: { accountId: number | null; onClose: () => void; onChanged?: () => void }) {
   const confirm = useConfirm();
+  const isAdmin = useIsAdmin();
   const [acc, setAcc] = useState<Account | null | undefined>(undefined);
   const [status, setStatus] = useState<AccountStatus>("standby");
   const [showPw, setShowPw] = useState(false);
@@ -82,19 +84,19 @@ export function AccountDialog({ accountId, onClose, onChanged }: { accountId: nu
             <KV k="Proxy" v={<span className="font-mono text-[12px] break-all">{acc.proxy || "— (direct)"}</span>} />
             <KV k="Attempt" v={acc.attempts} />
             <KV k="Credits / plan" v={`${acc.credits || "—"} / ${acc.plan || "—"}`} />
-            <KV k="Run" v={acc.run_id ? <Button variant="text" size="sm" href={`/settings/logs/${acc.run_id}`} icon="terminal" className="-ml-2 h-7">#{acc.run_id}</Button> : "—"} />
+            <KV k="Run" v={acc.run_id ? (isAdmin ? <Button variant="text" size="sm" href={`/settings/logs/${acc.run_id}`} icon="terminal" className="-ml-2 h-7">#{acc.run_id}</Button> : `#${acc.run_id}`) : "—"} />
             <KV k="Dibuat" v={`${fmtDateTime(acc.created_at)} WIB`} />
             <KV k="Diubah" v={`${fmtDateTime(acc.updated_at)} WIB`} />
             <KV k="Cookies" v={acc.has_cookies ? "tersimpan" : "tidak ada"} />
           </div>
-          <div className="flex flex-wrap items-end gap-3 mt-2">
+          {isAdmin && <div className="flex flex-wrap items-end gap-3 mt-2">
             <Field label="Ubah status" className="flex-1 min-w-[180px]">
               <Select value={status} onChange={(e) => setStatus(e.target.value as AccountStatus)}>
                 {ACCOUNT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </Select>
             </Field>
             <Button variant="primary" icon="save" spin={saving} disabled={saving || status === acc.status} onClick={save}>Simpan status</Button>
-          </div>
+          </div>}
         </>
       )}
     </Dialog>

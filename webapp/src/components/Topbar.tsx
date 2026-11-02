@@ -5,11 +5,13 @@ import { Icon } from "./Icon";
 import { Pill } from "./ui";
 import { StopRunButton } from "./StopRunButton";
 import { pageMeta } from "./nav";
+import { useIsAdmin } from "./Shell";
 import type { Summary } from "@/lib/api";
 
 export function Topbar({ onMenu, menuOpen, summary }: { onMenu: () => void; menuOpen: boolean; summary: Summary | null }) {
   const path = usePathname();
   const { title, sub } = pageMeta(path);
+  const isAdmin = useIsAdmin();
   const run = summary?.last_run ?? null;
   const running = summary?.creator_running ?? false;
   const target = summary?.standby_target ?? 0;
@@ -50,7 +52,7 @@ export function Topbar({ onMenu, menuOpen, summary }: { onMenu: () => void; menu
             </>
           )}
         </div>
-        {running && <StopRunButton stopping={summary?.stop_requested} compact />}
+        {isAdmin && running && <StopRunButton stopping={summary?.stop_requested} compact />}
       </div>
     </header>
   );

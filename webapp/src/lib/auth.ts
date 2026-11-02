@@ -86,16 +86,40 @@ export async function checkCredentials(user: string, password: string): Promise<
   }
 }
 
-/** Cookie tetap valid 7 hari; user DB yang sudah dihapus harus ditolak. Backend mati → tolak (admin env tetap bisa). */
-export async function sessionUserActive(user: string): Promise<boolean> {
-  if (isEnvAdmin(user)) return true;
+export type UserRole = "admin" | "member";
+
+/**
+ * Role user untuk sesi ini, dicek LIVE ke backend tiap request (hak akses berubah tanpa login ulang).
+ * null = user sudah dihapus / backend mati (admin env tetap "admin").
+ */
+export async function sessionUserRole(user: string): Promise<UserRole | null> {
+  if (isEnvAdmin(user)) return "admin";
   try {
     const res = await fetch(`${BACKEND}/auth/user-exists?username=${encodeURIComponent(user)}`, { cache: "no-store" });
-    return res.ok && (await res.json()).exists === true;
+    if (!res.ok) return null;
+    const j = (await res.json()) as { exists?: boolean; role?: string | null };
+    if (j.exists !== true) return null;
+    return j.role === "admin" ? "admin" : "member";
   } catch {
-    return false;
+    return null;
   }
 }
+
+/** Cookie tetap valid 7 hari; user DB yang sudah dihapus harus ditolak. */
+export async function sessionUserActive(user: string): Promise<boolean> {
+  return (await sessionUserRole(user)) !== null;
+}
+
+/** Hak akses member: hanya distribusi akun (halaman Accounts + API accounts baca/tandai/export). */
+export const MEMBER_HOME = "/accounts";
+export function memberPageAllowed(pathname: string): boolean {
+  return pathname === "/accounts" || pathname.startsWith("/accounts/");
+}
+export function memberApiAllowed(pathname: string): boolean {
+  return pathname === "/api/backend/summary" || pathname.startsWith("/api/backend/accounts") || pathname === "/api/auth/logout";
+}
+export const ROLE_HEADER = "x-user-role";
+export const USER_HEADER = "x-user-name";
 
 /** URL absolut untuk redirect, hormati proxy (cloudflared: X-Forwarded-Proto/Host). */
 export function absoluteUrl(req: { headers: Headers; nextUrl: URL }, pathAndQuery: string): string {

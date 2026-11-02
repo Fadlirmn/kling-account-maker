@@ -116,7 +116,8 @@ def test_users_dan_auth(client, monkeypatch):
     assert [u["role"] for u in client.get("/api/users").json() if u["username"] == "ops"] == ["admin"]
     assert client.post("/api/users", json={"username": "ops", "password": "rahasia123"}).status_code == 409
     assert client.post("/api/auth/verify", json={"username": "ops", "password": "rahasia123"}).json()["ok"] is True
-    assert client.get("/api/auth/user-exists?username=ops").json()["exists"] is True
+    assert client.get("/api/auth/user-exists?username=ops").json() == {"exists": True, "role": "admin"}
+    assert client.get("/api/auth/user-exists?username=nobody").json() == {"exists": False, "role": None}
     assert client.put(f"/api/users/{uid}/password", json={"password": "baru12345"}).json()["ok"] is True
     assert client.delete(f"/api/users/{uid}").json()["ok"] is True
     assert client.delete(f"/api/users/{uid}").status_code == 404

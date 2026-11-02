@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { ROLE_HEADER } from "@/lib/auth";
 
 // Proxy server-side ke backend FastAPI. Middleware sudah memproteksi /api/* (401 tanpa session),
 // jadi tidak ada cek auth di sini. Body diteruskan apa adanya (JSON, CSV download, dsb).
@@ -8,8 +9,30 @@ const BASE = `${process.env.API_BASE_URL ?? "http://localhost:8000"}/api`;
 // endpoint sensitif hanya lewat route handler khusus (/api/users) atau server-side
 const BLOCKED = new Set(["auth", "users"]);
 
+// aksi massal yang boleh dilakukan member (distribusi akun): tandai dipakai / belum dipakai
+const MEMBER_BULK_ACTIONS = new Set(["mark_used", "mark_unused"]);
+
+/** Member: GET summary/accounts*, POST accounts/bulk hanya mark_used|mark_unused. Lainnya 403. */
+function memberAllowed(path: string[], method: string, body: string): boolean {
+  const p = path.join("/");
+  if (method === "GET") return p === "summary" || p.startsWith("accounts");
+  if (method === "POST" && p === "accounts/bulk") {
+    try {
+      return MEMBER_BULK_ACTIONS.has(JSON.parse(body)?.action);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 async function proxy(req: NextRequest, path: string[], method: string) {
   if (BLOCKED.has(path[0] ?? "")) return Response.json({ detail: "forbidden" }, { status: 403 });
+  const body = method === "GET" ? undefined : await req.text();
+  const role = req.headers.get(ROLE_HEADER);
+  if (role === "member" && !memberAllowed(path, method, body ?? "")) {
+    return Response.json({ detail: "forbidden: khusus admin" }, { status: 403 });
+  }
   const url = `${BASE}/${path.join("/")}${req.nextUrl.search}`;
   const headers: Record<string, string> = {};
   const ct = req.headers.get("content-type");
@@ -18,7 +41,7 @@ async function proxy(req: NextRequest, path: string[], method: string) {
     const res = await fetch(url, {
       method,
       headers,
-      body: method === "GET" ? undefined : await req.text(),
+      body,
       cache: "no-store",
     });
     const out = new Headers();

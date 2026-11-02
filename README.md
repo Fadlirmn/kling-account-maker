@@ -44,7 +44,7 @@ scheduler atau CLI.
 |---|---|
 | Backend | Python 3.11 · FastAPI + Uvicorn · APScheduler · SQLAlchemy 2 Core (psycopg 3 / SQLite WAL) · openpyxl · pytest |
 | Browser | Camoufox 0.4.11 (Firefox anti-detect, geoip dari proxy) · Playwright 1.60 · Xvfb `:99` di container |
-| Email/OTP | Cloudflare Email Routing → Worker (webhook), Go TempMail, 1secmail, mail.tm, GPTMail |
+| Email/OTP | **Kurma Mail** (`email-custom`: catch-all + `GET /api/emails/lookup` X-API-Key), Cloudflare Worker webhook, Go TempMail, 1secmail, mail.tm, GPTMail |
 | Frontend | Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind CSS 3 (token CSS var) · Recharts · Material Symbols |
 | Auth | Cookie sesi HMAC-SHA256 (Web Crypto, edge middleware) · user tabel `users` (scrypt) dengan role **admin** / **member**; role dicek live tiap request. Member hanya distribusi akun: halaman Accounts, tandai dipakai/belum, export, unduh cookies — tanpa Dashboard/Settings/User, hapus, atau ubah status |
 | Runtime | Docker Compose (`kling-backend` 8010, `kling-webapp` 3201, profile `creator`) · Node 22 alpine · python:3.11-slim |
@@ -113,6 +113,20 @@ dengan kode error terakhir. Status run: `running → success | partial | failed`
 Prioritas backend: **env var > config.local.json > config.json > default kode**. Env var dengan nama lama
 (`EMAIL_PROVIDER`, `WORKERS`, `ENABLE_SCHEDULER`, …) tetap bisa menimpa config.json — berguna untuk Docker/CI.
 Di compose `config.json` di-mount read-only; edit lalu `docker compose restart backend`.
+
+## Email/OTP via Kurma Mail (default)
+
+Provider default `kurmamail` memakai sistem email sendiri (`/home/sumbul/Dokumen/email-custom`, sudah dipatch):
+
+1. Deploy Kurma Mail; di Cloudflare aktifkan **Email Routing → catch-all → Send to Worker** untuk domain yang akan
+   dipakai akun (Worker meneruskan ke `https://mail.domain/api/webhooks/inbound`).
+2. Kurma Mail menyimpan email ke alamat tak dikenal (`kling_xxx@domain`) ke inbox user penampung
+   (`CATCHALL_USER_EMAIL`, default admin) — `INBOUND_CATCHALL=true`.
+3. Buat API key di Kurma Mail (Admin › API Keys) → isi `.env` Kling: `KURMAMAIL_URL=https://mail.domain`,
+   `KURMAMAIL_API_KEY=km_…`. Daftar domain → `backend/domain.txt` (atau `email.custom_domains`).
+4. Creator membuat alamat `{email.prefix}<acak>@<domain>` lalu polling
+   `GET /api/emails/lookup?to=<alamat>&since=…` (X-API-Key) dan mengekstrak OTP (`email.otp_phrases`,
+   `email.sender_filter`). Cek koneksi di **Settings › Testing** (baris Kurma Mail + "Buat mailbox uji").
 
 ## Data dummy
 

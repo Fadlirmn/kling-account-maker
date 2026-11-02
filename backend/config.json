@@ -8,7 +8,7 @@
     "enabled": true
   },
   "email": {
-    "provider": "1secmail",
+    "provider": "kurmamail",
     "allow_gptmail_fallback": true,
     "prefix": "kling_",
     "sender_filter": [
@@ -22,7 +22,8 @@
     "webhook_otp_path": "/get-otp",
     "custom_domains": [],
     "tempmail_domain_file": "",
-    "tempmail_db_path": ""
+    "tempmail_db_path": "",
+    "_provider_note": "kurmamail | webhook | local_tempmail | 1secmail | mailtm | gptmail. kurmamail = Kurma Mail (email-custom): URL & API key di .env, domain di custom_domains/domain.txt"
   },
   "proxy": {
     "bad_cooldown": 300

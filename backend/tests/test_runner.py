@@ -19,6 +19,8 @@ def eng(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "RESULTS_FILE", tmp_path / "results.txt")
     monkeypatch.setattr(config, "COOKIES_DIR", tmp_path)
     monkeypatch.setattr(runner, "get_safe_workers", lambda n: n)
+    # default config.json = kurmamail (butuh kredensial) → tes pakai provider publik
+    repo.save_settings(e, {"email_provider": "1secmail"})
     return e
 
 

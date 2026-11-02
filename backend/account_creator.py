@@ -27,7 +27,7 @@ def main() -> int:
     p.add_argument("--pre-create", type=int, default=None, metavar="N", help="Jumlah akun (default: settings.batch_size)")
     p.add_argument("--workers", type=int, default=None,
                    help=f"Browser paralel (default: settings.workers; dibatasi RAM guard {config.RAM_PER_WORKER_MB}MB/worker)")
-    p.add_argument("--provider", choices=["webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"],
+    p.add_argument("--provider", choices=["kurmamail", "webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"],
                    help="Override provider email")
     args = p.parse_args()
 

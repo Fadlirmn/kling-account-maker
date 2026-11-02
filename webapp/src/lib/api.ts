@@ -137,8 +137,8 @@ export interface Summary {
   scheduler: { enabled: boolean; schedule_time: string | null; next_run_at: string | null; next_refill_at: string | null };
 }
 
-export type EmailProvider = "webhook" | "local_tempmail" | "1secmail" | "mailtm" | "gptmail";
-export const EMAIL_PROVIDERS: EmailProvider[] = ["webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"];
+export type EmailProvider = "kurmamail" | "webhook" | "local_tempmail" | "1secmail" | "mailtm" | "gptmail";
+export const EMAIL_PROVIDERS: EmailProvider[] = ["kurmamail", "webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"];
 
 export interface Settings {
   workers: number;

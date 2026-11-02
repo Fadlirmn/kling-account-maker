@@ -8,7 +8,7 @@ Sumber, urutan prioritas (yang di atas menang):
   4. default di kode
 
 Kredensial TIDAK pernah ada di config.json: DATABASE_URL, KLING_DEFAULT_PASSWORD, CLOUDFLARE_WORKER_URL,
-TEMPMAIL_API_URL/SECRET, PROXY_LIST, CROXY_BASE_PROXY → .env saja.
+KURMAMAIL_URL/API_KEY, TEMPMAIL_API_URL/SECRET, PROXY_LIST, CROXY_BASE_PROXY → .env saja.
 Path runtime (DATA_DIR, LOG_DIR, ...) juga env karena Docker mengarahkannya ke /data/*.
 """
 from __future__ import annotations
@@ -150,6 +150,10 @@ MANUAL_OTP             = _bool("MANUAL_OTP", "email.manual_otp", False)
 WEBHOOK_OTP_PATH       = _str("WEBHOOK_OTP_PATH", "email.webhook_otp_path", "/get-otp")
 CLOUDFLARE_WORKER_URL  = _env("CLOUDFLARE_WORKER_URL").rstrip("/")          # KREDENSIAL (URL privat) — .env
 
+# Kurma Mail (email-custom): inbox catch-all + GET /api/emails/lookup dengan X-API-Key
+KURMAMAIL_URL     = _env("KURMAMAIL_URL").rstrip("/")                      # .env
+KURMAMAIL_API_KEY = _env("KURMAMAIL_API_KEY")                              # KREDENSIAL — .env
+
 # Local TempMail (Go service)
 TEMPMAIL_API_URL     = _env("TEMPMAIL_API_URL").rstrip("/")                 # .env
 TEMPMAIL_SECRET      = _env("TEMPMAIL_SECRET")                              # KREDENSIAL — .env
@@ -235,8 +239,13 @@ def validate(require_password: bool = True) -> list[str]:
     problems = []
     if require_password:
         problems += password_problems(KLING_DEFAULT_PASSWORD)
-    if EMAIL_PROVIDER not in ("webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"):
+    if EMAIL_PROVIDER not in ("kurmamail", "webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"):
         problems.append(f"email.provider tidak dikenal: {EMAIL_PROVIDER}")
+    if EMAIL_PROVIDER == "kurmamail":
+        if not (KURMAMAIL_URL and KURMAMAIL_API_KEY):
+            problems.append("provider kurmamail butuh KURMAMAIL_URL dan KURMAMAIL_API_KEY (.env)")
+        if not CUSTOM_DOMAINS:
+            problems.append("provider kurmamail butuh domain.txt / email.custom_domains (domain yang di-route ke Kurma Mail)")
     if EMAIL_PROVIDER == "webhook" and not (CLOUDFLARE_WORKER_URL and CUSTOM_DOMAINS):
         problems.append("provider webhook butuh CLOUDFLARE_WORKER_URL (.env) dan domain.txt / email.custom_domains")
     if EMAIL_PROVIDER == "local_tempmail":

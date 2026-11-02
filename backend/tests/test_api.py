@@ -45,6 +45,7 @@ def test_settings_validation(client):
     assert client.put("/api/settings", json={"workers": True}).status_code == 422
     assert client.put("/api/settings", json={"schedule_time": "3:00"}).status_code == 422
     assert client.put("/api/settings", json={"email_provider": "yahoo"}).status_code == 422
+    assert client.put("/api/settings", json={"email_provider": "kurmamail"}).status_code == 200
     assert client.put("/api/settings", json={"enable_scheduler": "yes"}).status_code == 422
     r = client.put("/api/settings", json={"workers": 3, "schedule_time": "05:30", "email_provider": "mailtm"})
     assert r.status_code == 200

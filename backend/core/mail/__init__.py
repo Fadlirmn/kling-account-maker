@@ -2,7 +2,7 @@
 core.mail — factory + fallback chain provider email.
 
 Urutan (diport dari engine sumber):
-  preferred (EMAIL_PROVIDER) → webhook → local_tempmail → 1secmail → mailtm → gptmail (jika ALLOW_GPTMAIL_FALLBACK)
+  preferred (EMAIL_PROVIDER) → kurmamail → webhook → local_tempmail → 1secmail → mailtm → gptmail (jika ALLOW_GPTMAIL_FALLBACK)
 Provider yang gagal create() dicatat di `disabled` (per thread/slot) agar attempt berikut melompatinya.
 """
 from typing import Optional
@@ -15,8 +15,10 @@ from core.mail.local_tempmail import LocalTempMail
 from core.mail.secmail import SecMail
 from core.mail.mailtm import MailTm
 from core.mail.gptmail import GptMail
+from core.mail.kurmamail import KurmaMail
 
 PROVIDERS: dict[str, type[MailClient]] = {
+    "kurmamail": KurmaMail,
     "webhook": WebhookMail,
     "local_tempmail": LocalTempMail,
     "1secmail": SecMail,
@@ -24,7 +26,7 @@ PROVIDERS: dict[str, type[MailClient]] = {
     "gptmail": GptMail,
 }
 
-_DEFAULT_CHAIN = ["webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"]
+_DEFAULT_CHAIN = ["kurmamail", "webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"]
 
 
 def provider_chain(preferred: Optional[str] = None) -> list[str]:
@@ -33,6 +35,8 @@ def provider_chain(preferred: Optional[str] = None) -> list[str]:
     if not config.ALLOW_GPTMAIL_FALLBACK and pref != "gptmail":
         chain = [p for p in chain if p != "gptmail"]
     # provider yang butuh konfigurasi: skip kalau tidak tersedia
+    if not KurmaMail.available():
+        chain = [p for p in chain if p != "kurmamail"]
     if not WebhookMail.available():
         chain = [p for p in chain if p != "webhook"]
     if not LocalTempMail.available():
@@ -66,4 +70,4 @@ def make_mail_client(preferred: Optional[str] = None, disabled: Optional[set] = 
 
 
 __all__ = ["MailClient", "make_mail_client", "provider_chain", "PROVIDERS",
-           "WebhookMail", "LocalTempMail", "SecMail", "MailTm", "GptMail"]
+           "KurmaMail", "WebhookMail", "LocalTempMail", "SecMail", "MailTm", "GptMail"]

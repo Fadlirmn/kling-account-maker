@@ -6,6 +6,7 @@ Isi DB dengan data dummy supaya dashboard punya isi sebelum flow kling.ai jadi.
   python seed_dummy.py --reset         # hapus semua akun dummy (@dummy.kling.test) & run dummy dulu
   python seed_dummy.py --days 30 --per-day 12
 
+Juga user dashboard dummy (DUMMY_USERS) dengan password yang sama dengan akun (PASSWORD).
 Data: run harian (scheduled) + beberapa manual/auto_refill, status campur success/partial/failed,
 log bergaya RunLogger; akun dengan status standby/active/exhausted/used/banned/failed,
 email *@dummy.kling.test, cookies JSON palsu, proxy ter-mask. Tidak menyentuh akun asli.
@@ -27,7 +28,8 @@ import repo
 from models import init_db, kling_accounts as acc_t, runs as runs_t
 
 DUMMY_DOMAIN = "dummy.kling.test"
-PASSWORD = config.KLING_DEFAULT_PASSWORD or "Kling#Maker2026"   # satu password untuk semua akun
+PASSWORD = config.KLING_DEFAULT_PASSWORD or "Kling#Maker2026"   # satu password untuk semua akun & user dummy
+DUMMY_USERS = ["ops", "qa", "viewer"]                            # user dashboard dummy (Settings > User)
 WIB = timezone(timedelta(hours=7))
 PROVIDERS = ["webhook", "1secmail", "mailtm", "webhook", "webhook"]
 FAIL_CODES = ["otp timeout", "PROXY_FLAGGED_CLOUDFLARE", "email input not found", "exception: NS_ERROR_NET_INTERRUPT",
@@ -72,7 +74,21 @@ def _log(run_id: int, trigger: str, start: datetime, n: int, workers: int, ok_em
     return "\n".join(lines)
 
 
+def seed_users(engine) -> None:
+    """User dashboard dummy, idempoten: dibuat kalau belum ada, password selalu disamakan dengan PASSWORD."""
+    for u in DUMMY_USERS:
+        existing = next((x for x in repo.list_users(engine) if x["username"] == u), None)
+        if existing:
+            repo.set_password(engine, existing["id"], PASSWORD)
+        else:
+            repo.create_user(engine, u, PASSWORD)
+    print(f"users: {', '.join(DUMMY_USERS)} (password = KLING_DEFAULT_PASSWORD)")
+
+
 def reset(engine) -> None:
+    for x in repo.list_users(engine):
+        if x["username"] in DUMMY_USERS:
+            repo.delete_user(engine, x["id"])
     with engine.begin() as con:
         n_acc = con.execute(delete(acc_t).where(acc_t.c.email.like(f"%@{DUMMY_DOMAIN}"))).rowcount
         n_run = con.execute(delete(runs_t).where(runs_t.c.error_message.like("%[dummy]%")
@@ -156,6 +172,7 @@ def main() -> int:
     if a.reset:
         reset(engine)
     seed(engine, a.days, a.per_day)
+    seed_users(engine)
     return 0
 
 

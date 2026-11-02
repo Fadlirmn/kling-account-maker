@@ -115,8 +115,8 @@ Di compose `config.json` di-mount read-only; edit lalu `docker compose restart b
 ## Data dummy
 
 `cd backend && .venv/bin/python seed_dummy.py --reset` mengisi 14 hari run + ~150 akun `*@dummy.kling.test`
-(status campur, log bergaya RunLogger) supaya dashboard punya isi sebelum flow jadi. `--reset` hanya menghapus
-data dummy itu.
+(status campur, log bergaya RunLogger) plus user dashboard dummy `ops`, `qa`, `viewer` dengan password yang sama
+dengan akun (`KLING_DEFAULT_PASSWORD`). `--reset` hanya menghapus data dummy itu.
 
 ## Creator
 

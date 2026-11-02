@@ -104,6 +104,7 @@ users = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("username", String(64), nullable=False, unique=True),
     Column("password_hash", Text, nullable=False),
+    Column("role", String(16), nullable=False, default="member"),   # admin | member
     Column("created_at", DateTime(timezone=True), nullable=False, default=utcnow),
     Column("updated_at", DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow),
 )
@@ -119,6 +120,7 @@ _NEW_COLUMNS: list[tuple[str, str, str]] = [
     ("kling_accounts", "proxy", "TEXT"),
     ("kling_accounts", "email_mode", "VARCHAR(20)"),
     ("kling_accounts", "updated_at", "TIMESTAMP"),
+    ("users", "role", "VARCHAR(16) DEFAULT 'member'"),
 ]
 
 

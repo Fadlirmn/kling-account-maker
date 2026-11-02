@@ -13,7 +13,11 @@ export async function PUT(req: Request, ctx: Ctx) {
   if (!(await currentUser())) return Response.json({ detail: "unauthorized" }, { status: 401 });
   const id = await userId(ctx);
   if (id === null) return Response.json({ detail: "User tidak ditemukan" }, { status: 404 });
-  return forward(`/users/${id}/password`, { method: "PUT", body: await req.text() });
+  const body = await req.text();
+  let parsed: { role?: unknown } = {};
+  try { parsed = JSON.parse(body); } catch { /* bukan JSON → biarkan backend yang menolak */ }
+  const target = typeof parsed.role === "string" ? "role" : "password";
+  return forward(`/users/${id}/${target}`, { method: "PUT", body });
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {

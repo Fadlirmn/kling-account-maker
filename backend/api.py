@@ -475,11 +475,24 @@ def create_user(body: dict):
     if not _USERNAME_RE.match(username):
         raise HTTPException(status_code=422, detail="Username 3–32 karakter: huruf, angka, titik, _ atau -")
     pw = _check_password_body(body)
+    role = body.get("role", "member")
+    if role not in repo.USER_ROLES:
+        raise HTTPException(status_code=422, detail="role harus admin | member")
     engine = _engine()
     env_admin = os.getenv("DASHBOARD_USER", "").strip()
     if (env_admin and username.lower() == env_admin.lower()) or repo.user_exists(engine, username):
         raise HTTPException(status_code=409, detail="Username sudah dipakai")
-    return repo.create_user(engine, username, pw)
+    return repo.create_user(engine, username, pw, role)
+
+
+@app.put("/api/users/{user_id}/role")
+def change_role(user_id: int, body: dict):
+    role = body.get("role")
+    if role not in repo.USER_ROLES:
+        raise HTTPException(status_code=422, detail="role harus admin | member")
+    if not repo.set_role(_engine(), user_id, role):
+        raise HTTPException(status_code=404, detail="User tidak ditemukan")
+    return {"ok": True, "role": role}
 
 
 @app.put("/api/users/{user_id}/password")

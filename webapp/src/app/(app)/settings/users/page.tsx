@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Avatar, Button, Card, Loading, PageBar, Pill } from "@/components/ui";
+import { Dialog } from "@/components/Dialog";
+import { Select } from "@/components/form";
+import type { DashboardUser, UserRole } from "@/lib/api";
 import { Field } from "@/components/form";
 import { Alert, FlashMsg } from "@/components/Alert";
 import { useConfirm } from "@/components/Dialog";
@@ -23,15 +26,51 @@ async function call(method: string, path: string, body?: unknown): Promise<{ ok:
   }
 }
 
+// Divisi = akhiran username (<nama>_<divisi>), sama dengan seed intercept-google-flow.
+const DIVISIONS: { id: string; label: string }[] = [
+  { id: "herbal", label: "Divisi Herbal" },
+  { id: "fashion_malaysia", label: "Divisi Fashion Malaysia" },
+  { id: "fashion_filipina", label: "Divisi Fashion Filipina" },
+  { id: "operasional", label: "Divisi Operasional" },
+];
+const OTHER = { id: "", label: "Lainnya" };
+
+function divisionOf(username: string): string {
+  const d = DIVISIONS.find((x) => username.endsWith(`_${x.id}`));
+  return d ? d.id : "";
+}
+function displayName(username: string): string {
+  const d = divisionOf(username);
+  const base = d ? username.slice(0, -(d.length + 1)) : username;
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+const ROLE_LABEL: Record<UserRole, string> = { admin: "Admin", member: "Member" };
+
+function groupByDivision(users: DashboardUser[]) {
+  const groups = [...DIVISIONS, OTHER].map((d) => ({ ...d, users: [] as DashboardUser[] }));
+  for (const u of users) {
+    const g = groups.find((x) => x.id === divisionOf(u.username)) ?? groups[groups.length - 1];
+    g.users.push(u);
+  }
+  // admin di atas, lalu member; masing-masing urut nama
+  for (const g of groups) g.users.sort((a, b) => (a.role === b.role ? a.username.localeCompare(b.username) : a.role === "admin" ? -1 : 1));
+  return groups.filter((g) => g.users.length > 0);
+}
+
 export default function UsersSettingsPage() {
   const confirm = useConfirm();
   const [data, setData] = useState<UsersResponse | null | undefined>(undefined);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState("");          // nama (tanpa akhiran divisi)
+  const [division, setDivision] = useState(DIVISIONS[0].id);
   const [password, setPassword] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [role, setRole] = useState<UserRole>("member");
   const [resetFor, setResetFor] = useState<number | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const fullUsername = `${username.trim().toLowerCase().replace(/\s+/g, "")}${division ? `_${division}` : ""}`;
+  const canAdd = !busy && username.trim().length >= 2 && fullUsername.length >= 3 && password.length >= 8;
 
   const load = () =>
     fetch("/api/users", { cache: "no-store" })
@@ -58,10 +97,16 @@ export default function UsersSettingsPage() {
   };
 
   const addUser = async () => {
-    if (await run(() => call("POST", "/api/users", { username: username.trim(), password }), `User ${username.trim()} ditambahkan`)) {
+    if (await run(() => call("POST", "/api/users", { username: fullUsername, password, role }), `User ${fullUsername} ditambahkan`)) {
       setUsername("");
       setPassword("");
+      setAddOpen(false);
     }
+  };
+
+  const changeRole = async (u: DashboardUser) => {
+    const next: UserRole = u.role === "admin" ? "member" : "admin";
+    run(() => call("PUT", `/api/users/${u.id}`, { role: next }), `${displayName(u.username)} → ${next}`);
   };
 
   const resetPassword = async (id: number, name: string) => {
@@ -87,85 +132,112 @@ export default function UsersSettingsPage() {
 
   return (
     <div className="max-w-[760px] w-full mx-auto flex flex-col gap-4">
-      <PageBar meta={`Login sebagai ${data.me}`} />
+      <PageBar
+        meta={`Login sebagai ${data.me} · ${data.users.length} user${data.env_admin ? " + admin env" : ""}`}
+        right={<Button variant="primary" size="sm" icon="person_add" onClick={() => setAddOpen(true)}>Tambah User</Button>}
+      />
       <FlashMsg msg={msg} />
 
-      <Card title="Akun Dashboard" desc="Semua akun punya akses penuh">
-        <ul className="divide-y divide-line-soft">
-          {data.env_admin && (
-            <li className="flex items-center gap-3 py-3">
-              <Avatar name={data.env_admin} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 body2 text-text font-semibold">
-                  <span className="truncate">{data.env_admin}</span>
-                  <Pill sm>env</Pill>
-                  {data.me_is_env_admin && <Pill tone="violet" sm>kamu</Pill>}
-                </div>
-                <div className="caption text-text3">Akun cadangan · ubah lewat deploy/init-user.sh</div>
+      {data.env_admin && (
+        <Card title="Admin" desc="Akun cadangan dari .env · ubah lewat deploy/init-user.sh" padSm>
+          <div className="flex items-center gap-3 py-1">
+            <Avatar name={data.env_admin} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 body2 text-text font-semibold">
+                <span className="truncate">{data.env_admin}</span>
+                <Pill sm>env</Pill>
+                {data.me_is_env_admin && <Pill tone="violet" sm>kamu</Pill>}
               </div>
-            </li>
-          )}
-          {data.users.map((u) => {
-            const self = u.username === data.me;
-            const resetting = resetFor === u.id;
-            return (
-              <li key={u.id} className="py-3 flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar name={u.username} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 body2 text-text font-semibold">
-                      <span className="truncate">{u.username}</span>
-                      {self && <Pill tone="violet" sm>kamu</Pill>}
-                    </div>
-                    <div className="caption text-text3">dibuat {fmtDateTime(u.created_at)}</div>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button variant="text" size="sm" icon="key" onClick={() => { setResetFor(resetting ? null : u.id); setNewPassword(""); }}>
-                      <span className="hidden sm:inline">Password</span>
-                    </Button>
-                    {!self && (
-                      <Button variant="danger-text" size="sm" icon="delete" disabled={busy} onClick={() => removeUser(u.id, u.username)}>
-                        <span className="hidden sm:inline">Hapus</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {resetting && (
-                  <div className="flex flex-col sm:flex-row gap-2 sm:pl-[46px]">
-                    <input type="password" autoComplete="new-password" className="input" placeholder="Password baru (min. 8 karakter)"
-                      value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                    <Button variant="primary" disabled={busy || newPassword.length < 8} onClick={() => resetPassword(u.id, u.username)}>Simpan</Button>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-        {data.users.length === 0 && <p className="caption text-text3 mt-2">Belum ada user tambahan.</p>}
-      </Card>
+            </div>
+          </div>
+        </Card>
+      )}
 
-      <Card title="Tambah User" desc="Username 3–32 karakter (huruf, angka, . _ -) · password min. 8 karakter">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!busy && username.trim().length >= 3 && password.length >= 8) addUser();
-          }}
-        >
+      {groupByDivision(data.users).map((g) => (
+        <Card key={g.id || "lainnya"} title={g.label} desc={`${g.users.filter((u) => u.role === "admin").length} admin · ${g.users.filter((u) => u.role !== "admin").length} member`} padSm>
+          <ul className="divide-y divide-line-soft">
+            {g.users.map((u) => {
+              const self = u.username === data.me;
+              const resetting = resetFor === u.id;
+              return (
+                <li key={u.id} className="py-2.5 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={displayName(u.username)} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 body2 text-text font-semibold">
+                        <span className="truncate">{displayName(u.username)}</span>
+                        <Pill sm tone={u.role === "admin" ? "info" : "neutral"}>{ROLE_LABEL[u.role] ?? u.role}</Pill>
+                        {self && <Pill tone="violet" sm>kamu</Pill>}
+                      </div>
+                      <div className="caption text-text3 truncate"><span className="font-mono">{u.username}</span> · dibuat {fmtDateTime(u.created_at)}</div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      {!self && (
+                        <Button variant="text" size="sm" icon={u.role === "admin" ? "person_remove" : "admin_panel_settings"} disabled={busy} onClick={() => changeRole(u)} title={u.role === "admin" ? "Jadikan member" : "Jadikan admin"}>
+                          <span className="hidden md:inline">{u.role === "admin" ? "Member" : "Admin"}</span>
+                        </Button>
+                      )}
+                      <Button variant="text" size="sm" icon="key" onClick={() => { setResetFor(resetting ? null : u.id); setNewPassword(""); }}>
+                        <span className="hidden sm:inline">Password</span>
+                      </Button>
+                      {!self && (
+                        <Button variant="danger-text" size="sm" icon="delete" disabled={busy} onClick={() => removeUser(u.id, u.username)}>
+                          <span className="hidden sm:inline">Hapus</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {resetting && (
+                    <div className="flex flex-col sm:flex-row gap-2 sm:pl-[46px]">
+                      <input type="password" autoComplete="new-password" className="input" placeholder="Password baru (min. 8 karakter)"
+                        value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                      <Button variant="primary" disabled={busy || newPassword.length < 8} onClick={() => resetPassword(u.id, u.username)}>Simpan</Button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      ))}
+      {data.users.length === 0 && <Card><p className="caption text-text3">Belum ada user tambahan. Klik “Tambah User”.</p></Card>}
+
+      <Dialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Tambah User"
+        block
+        actions={
+          <>
+            <Button variant="text" onClick={() => setAddOpen(false)}>Batal</Button>
+            <Button variant="primary" icon="person_add" disabled={!canAdd} onClick={addUser}>{busy ? "Memproses…" : "Tambah"}</Button>
+          </>
+        }
+      >
+        <form onSubmit={(e) => { e.preventDefault(); if (canAdd) addUser(); }} className="flex flex-col gap-3.5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5">
-            <Field label="Username">
-              <input className="input" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Field label="Nama" hint="huruf/angka, tanpa spasi">
+              <input className="input" autoComplete="off" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} placeholder="mis. rian" />
             </Field>
-            <Field label="Password">
+            <Field label="Divisi">
+              <Select value={division} onChange={(e) => setDivision(e.target.value)}>
+                {DIVISIONS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+                <option value="">Tanpa divisi</option>
+              </Select>
+            </Field>
+            <Field label="Role">
+              <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </Select>
+            </Field>
+            <Field label="Password" hint="min. 8 karakter">
               <input type="password" autoComplete="new-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
             </Field>
           </div>
-          <div className="card-actions">
-            <Button type="submit" variant="primary" icon="person_add" disabled={busy || username.trim().length < 3 || password.length < 8}>
-              {busy ? "Memproses…" : "Tambah User"}
-            </Button>
-          </div>
+          <p className="caption text-text3">Username: <span className="font-mono text-text">{fullUsername || "—"}</span></p>
         </form>
-      </Card>
+      </Dialog>
     </div>
   );
 }

@@ -79,12 +79,15 @@ def _log(run_id: int, trigger: str, start: datetime, n: int, workers: int, ok_em
 
 def seed_users(engine) -> None:
     """User dashboard dummy, idempoten: dibuat kalau belum ada, password selalu disamakan dengan USER_PASSWORD."""
+    admins = set(config.CONFIG.get("seed", {}).get("admins") or [])
     for u in DUMMY_USERS:
+        role = "admin" if u in admins else "member"
         existing = next((x for x in repo.list_users(engine) if x["username"] == u), None)
         if existing:
             repo.set_password(engine, existing["id"], USER_PASSWORD)
+            repo.set_role(engine, existing["id"], role)
         else:
-            repo.create_user(engine, u, USER_PASSWORD)
+            repo.create_user(engine, u, USER_PASSWORD, role)
     print(f"users: {len(DUMMY_USERS)} user ({DUMMY_USERS[0]} … {DUMMY_USERS[-1]}) password dari DASHBOARD_USER_DEFAULT_PASSWORD / DASHBOARD_PASSWORD")
 
 

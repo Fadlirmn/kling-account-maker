@@ -96,6 +96,9 @@
       "shafira_operasional",
       "sintia_operasional"
     ],
-    "users_note": "format <nama>_<divisi>, sama dengan seed_divisions_and_users.py project intercept-google-flow; password dari .env DASHBOARD_USER_DEFAULT_PASSWORD"
+    "users_note": "format <nama>_<divisi>, sama dengan seed_divisions_and_users.py project intercept-google-flow; password dari .env DASHBOARD_USER_DEFAULT_PASSWORD",
+    "admins": [
+      "hereacil"
+    ]
   }
 }

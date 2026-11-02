@@ -124,12 +124,16 @@ def check_password(password: str, stored: str) -> bool:
         return False
 
 
-_USER_PUBLIC = (users_t.c.id, users_t.c.username, users_t.c.created_at, users_t.c.updated_at)
+USER_ROLES = ("admin", "member")
+_USER_PUBLIC = (users_t.c.id, users_t.c.username, users_t.c.role, users_t.c.created_at, users_t.c.updated_at)
 
 
 def list_users(engine: Engine) -> list[dict]:
     with engine.connect() as con:
-        return [_row(r) for r in con.execute(select(*_USER_PUBLIC).order_by(users_t.c.username))]
+        rows = [_row(r) for r in con.execute(select(*_USER_PUBLIC).order_by(users_t.c.username))]
+    for r in rows:
+        r["role"] = r.get("role") or "member"   # baris lama sebelum kolom role
+    return rows
 
 
 def get_user(engine: Engine, user_id: int) -> dict | None:
@@ -143,13 +147,23 @@ def user_exists(engine: Engine, username: str) -> bool:
         return con.execute(select(users_t.c.id).where(users_t.c.username == username)).first() is not None
 
 
-def create_user(engine: Engine, username: str, password: str) -> dict:
+def create_user(engine: Engine, username: str, password: str, role: str = "member") -> dict:
+    if role not in USER_ROLES:
+        raise ValueError(f"role tidak valid: {role}")
     now = _now()
     with engine.begin() as con:
         uid = con.execute(insert(users_t).values(
-            username=username, password_hash=hash_password(password), created_at=now, updated_at=now,
+            username=username, password_hash=hash_password(password), role=role, created_at=now, updated_at=now,
         )).inserted_primary_key[0]
     return get_user(engine, uid)
+
+
+def set_role(engine: Engine, user_id: int, role: str) -> bool:
+    if role not in USER_ROLES:
+        raise ValueError(f"role tidak valid: {role}")
+    with engine.begin() as con:
+        return con.execute(update(users_t).where(users_t.c.id == user_id)
+                           .values(role=role, updated_at=_now())).rowcount > 0
 
 
 def set_password(engine: Engine, user_id: int, password: str) -> bool:

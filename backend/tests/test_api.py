@@ -107,8 +107,13 @@ def test_users_dan_auth(client, monkeypatch):
     assert client.post("/api/users", json={"username": "ab", "password": "x"}).status_code == 422
     assert client.post("/api/users", json={"username": "admin", "password": "rahasia123"}).status_code == 409
     r = client.post("/api/users", json={"username": "ops", "password": "rahasia123"})
-    assert r.status_code == 201
+    assert r.status_code == 201 and r.json()["role"] == "member"
     uid = r.json()["id"]
+    assert client.post("/api/users", json={"username": "boss", "password": "rahasia123", "role": "ngaco"}).status_code == 422
+    assert client.post("/api/users", json={"username": "boss", "password": "rahasia123", "role": "admin"}).json()["role"] == "admin"
+    assert client.put(f"/api/users/{uid}/role", json={"role": "admin"}).json()["role"] == "admin"
+    assert client.put(f"/api/users/{uid}/role", json={"role": "x"}).status_code == 422
+    assert [u["role"] for u in client.get("/api/users").json() if u["username"] == "ops"] == ["admin"]
     assert client.post("/api/users", json={"username": "ops", "password": "rahasia123"}).status_code == 409
     assert client.post("/api/auth/verify", json={"username": "ops", "password": "rahasia123"}).json()["ok"] is True
     assert client.get("/api/auth/user-exists?username=ops").json()["exists"] is True

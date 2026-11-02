@@ -158,9 +158,11 @@ export interface Settings {
   config_version: number;
 }
 
+export type UserRole = "admin" | "member";
 export interface DashboardUser {
   id: number;
   username: string;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }

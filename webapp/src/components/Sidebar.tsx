@@ -28,7 +28,7 @@ export function Sidebar({ open, user = "admin", summary }: { open: boolean; user
   return (
     <aside className={`sidebar ${open ? "open" : ""}`} id="sidebar" aria-label="Navigasi">
       <div className="sb-head">
-        <Image src="/logo/kling-icon.svg" alt="Kling Account Maker" width={34} height={34} priority />
+        <Image src="/logo/kling-icon.svg" alt="Kling Account Maker" width={46} height={46} priority />
         <div className="flex flex-col min-w-0 gap-px">
           <span className="sb-title el">Kurma Kling</span>
           <span className="sb-tag el">Account Maker</span>

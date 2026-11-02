@@ -1,0 +1,14 @@
+.venv
+venv
+__pycache__
+*.pyc
+data/
+logs/
+exports/
+cookies/
+result/
+camoufox_cache/
+tests/
+.env
+proxy.txt
+*.md

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- Kurma Group Palm Tree Mark (Orange #F97316) -->
+  <g transform="translate(0, 0)">
+    <!-- Trunk Base Line -->
+    <path d="M200 450H312" stroke="#F97316" stroke-width="12" stroke-linecap="round"/>
+    <!-- Trunk Stem -->
+    <path d="M246 450V250H266V450H246Z" fill="#F97316"/>
+    
+    <!-- Trunk Geometric Pattern Cutouts -->
+    <path d="M246 410L256 395L266 410" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M246 370L256 355L266 370" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M246 330L256 315L266 330" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M246 290L256 275L266 290" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+    <!-- Top Central Leaf -->
+    <path d="M256 60C232 120 244 230 256 250C268 230 280 120 256 60Z" fill="#F97316"/>
+    <path d="M256 75V235" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Upper Left Frond -->
+    <path d="M256 220C170 160 85 115 45 155C95 225 230 235 256 220Z" fill="#F97316"/>
+    <path d="M65 150L240 215" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M100 165L115 190" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M140 180L155 205" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M180 195L195 215" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Upper Right Frond -->
+    <path d="M256 220C342 160 427 115 467 155C417 225 282 235 256 220Z" fill="#F97316"/>
+    <path d="M447 150L272 215" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M412 165L397 190" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M372 180L357 205" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M332 195L317 215" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Middle Left Frond -->
+    <path d="M256 250C155 215 65 205 35 265C95 310 230 270 256 250Z" fill="#F97316"/>
+    <path d="M55 255L240 255" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M90 245L105 275" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M135 250L150 275" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M180 252L192 270" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Middle Right Frond -->
+    <path d="M256 250C357 215 447 205 477 265C417 310 282 270 256 250Z" fill="#F97316"/>
+    <path d="M457 255L272 255" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M422 245L407 275" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M377 250L362 275" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M332 252L320 270" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Lower Left Frond -->
+    <path d="M256 280C175 280 85 300 65 360C125 380 230 310 256 280Z" fill="#F97316"/>
+    <path d="M80 345L242 290" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M115 330L130 350" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M160 315L175 332" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Lower Right Frond -->
+    <path d="M256 280C337 280 427 300 447 360C387 380 282 310 256 280Z" fill="#F97316"/>
+    <path d="M432 345L270 290" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M397 330L382 350" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M352 315L337 332" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

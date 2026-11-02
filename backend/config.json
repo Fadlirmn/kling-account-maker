@@ -1,0 +1,54 @@
+{
+  "_comment": "Konfigurasi NON-rahasia Kling Account Maker. Kredensial (password, token, URL berkredensial, proxy) tetap di .env. Prioritas: env var > config.local.json > config.json > default kode. Bagian 'defaults' hanya nilai awal tabel settings (dashboard menimpa).",
+
+  "site": {
+    "name": "kling",
+    "signup_url": ""
+  },
+
+  "scheduler": {
+    "enabled": true
+  },
+
+  "email": {
+    "provider": "1secmail",
+    "allow_gptmail_fallback": true,
+    "prefix": "kling_",
+    "sender_filter": ["kling", "klingai"],
+    "otp_phrases": [],
+    "otp_length": 6,
+    "otp_timeout": 180,
+    "manual_otp": false,
+    "webhook_otp_path": "/get-otp",
+    "custom_domains": [],
+    "tempmail_domain_file": "",
+    "tempmail_db_path": ""
+  },
+
+  "proxy": {
+    "bad_cooldown": 300
+  },
+
+  "browser": {
+    "locale": "en-US",
+    "routing_allowlist": [],
+    "ram_per_worker_mb": 700
+  },
+
+  "defaults": {
+    "workers": 2,
+    "browser_concurrency": 2,
+    "batch_size": 10,
+    "max_daily_success": 500,
+    "standby_target": 20,
+    "refill_interval_minutes": 60,
+    "enable_scheduler": true,
+    "schedule_time": "03:00",
+    "schedule_jitter_minutes": 20,
+    "max_attempts_per_slot": 8,
+    "delay_between_accounts": 30,
+    "debug_screenshots": false,
+    "retention_days": 0,
+    "results_file": "results_kling.txt"
+  }
+}

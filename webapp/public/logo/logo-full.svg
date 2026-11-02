@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 600" width="512" height="600" fill="none">
+  <!-- Kurma Group Palm Tree Mark (Orange #F97316) -->
+  <g transform="translate(0, 0)">
+    <!-- Trunk Base Line -->
+    <path d="M200 390H312" stroke="#F97316" stroke-width="12" stroke-linecap="round"/>
+    <!-- Trunk Stem -->
+    <path d="M246 390V190H266V390H246Z" fill="#F97316"/>
+    
+    <!-- Trunk Geometric Pattern Cutouts -->
+    <path d="M246 350L256 335L266 350" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M246 310L256 295L266 310" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M246 270L256 255L266 270" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M246 230L256 215L266 230" stroke="#0F1115" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+    <!-- Top Central Leaf -->
+    <path d="M256 20C232 75 244 175 256 195C268 175 280 75 256 20Z" fill="#F97316"/>
+    <path d="M256 35V180" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Upper Left Frond -->
+    <path d="M256 160C170 100 85 55 45 95C95 165 230 175 256 160Z" fill="#F97316"/>
+    <path d="M65 90L240 155" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M100 105L115 130" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M140 120L155 145" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M180 135L195 155" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Upper Right Frond -->
+    <path d="M256 160C342 100 427 55 467 95C417 165 282 175 256 160Z" fill="#F97316"/>
+    <path d="M447 90L272 155" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M412 105L397 130" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M372 120L357 145" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M332 135L317 155" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Middle Left Frond -->
+    <path d="M256 190C155 155 65 145 35 205C95 250 230 210 256 190Z" fill="#F97316"/>
+    <path d="M55 195L240 195" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M90 185L105 215" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M135 190L150 215" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M180 192L192 210" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Middle Right Frond -->
+    <path d="M256 190C357 155 447 145 477 205C417 250 282 210 256 190Z" fill="#F97316"/>
+    <path d="M457 195L272 195" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M422 185L407 215" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M377 190L362 215" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M332 192L320 210" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Lower Left Frond -->
+    <path d="M256 220C175 220 85 240 65 300C125 320 230 250 256 220Z" fill="#F97316"/>
+    <path d="M80 285L242 230" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M115 270L130 290" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M160 255L175 272" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Lower Right Frond -->
+    <path d="M256 220C337 220 427 240 447 300C387 320 282 250 256 220Z" fill="#F97316"/>
+    <path d="M432 285L270 230" stroke="#0F1115" stroke-width="4" stroke-linecap="round"/>
+    <path d="M397 270L382 290" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+    <path d="M352 255L337 272" stroke="#0F1115" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Typography: KURMA -->
+  <text x="256" y="470" text-anchor="middle" fill="#F97316" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="64" letter-spacing="12">KURMA</text>
+  
+  <!-- Typography: GROUP -->
+  <text x="256" y="530" text-anchor="middle" fill="#F97316" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="34" letter-spacing="18">GROUP</text>
+</svg>

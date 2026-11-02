@@ -1,0 +1,44 @@
+# env & rahasia
+.env
+.env.*
+!.env.example
+
+# runtime backend
+backend/data/
+backend/logs/
+backend/exports/
+backend/cookies/
+backend/result/
+backend/camoufox_cache/
+backend/proxy.txt
+backend/*.mmdb
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# node / next
+webapp/node_modules/
+webapp/.next/
+webapp/out/
+webapp/next-env.d.ts
+webapp/tsconfig.tsbuildinfo
+
+# arsip
+*.zip
+*.tar.gz
+*.tgz
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# override lokal config (non-rahasia, per mesin)
+backend/config.local.json
+
+# screenshot/log lokal di root
+logs/

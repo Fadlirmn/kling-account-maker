@@ -1,0 +1,122 @@
+services:
+  # ---------- Backend: FastAPI + APScheduler + creator (Camoufox/Firefox di Xvfb) ----------
+  # API di 127.0.0.1:${API_PORT:-8010} (internal: http://backend:8000).
+  # Batch harian (settings.schedule_time, default 03:00 WIB) + isi ulang pool standby
+  # tiap settings.refill_interval_minutes. Satu batch pada satu waktu (_RUNNING).
+  # Kredensial dari .env (env_file); konfigurasi non-rahasia dari backend/config.json.
+  backend:
+    build:
+      context: ./backend
+    image: kling-maker/backend
+    container_name: kling-backend
+    init: true
+    env_file: .env
+    environment:
+      TZ: Asia/Jakarta
+      DATABASE_URL: ${DATABASE_URL:-}
+      SQLITE_PATH: /data/db/kling_accounts.db
+      DATA_DIR: /data/db                 # results_kling.txt, proxy.txt opsional
+      COOKIES_DIR: /data/cookies         # cookies/<email>.json
+      RESULT_DIR: /data/result           # screenshot debug
+      LOG_DIR: /data/logs                # satu file log per run: /data/logs/run_<id>.log
+      EXPORT_DIR: /data/exports
+      ENV_FILE: /data/.env
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
+      DISPLAY: ":99"                     # Xvfb (backend/entrypoint.sh) → Firefox headful, WebGL hidup
+      XDG_CACHE_HOME: /app/camoufox_cache
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "127.0.0.1:${API_PORT:-8010}:8000"
+    volumes:
+      - ./backend/data:/data/db          # SQLite fallback (kalau DATABASE_URL kosong)
+      - ./backend/logs:/data/logs
+      - ./backend/exports:/data/exports
+      - ./backend/cookies:/data/cookies
+      - ./backend/result:/data/result
+      - ./backend/camoufox_cache:/app/camoufox_cache   # binary browser (download sekali, ~1.3GB)
+      - ./backend/domain.txt:/app/domain.txt:ro
+      - ./backend/config.json:/app/config.json:ro     # konfigurasi non-rahasia (edit → restart backend)
+      # GeoIP langsung ke path package (hindari download lambat/corrupt). File HARUS ada di host —
+      # kalau tidak, Docker membuat DIRECTORY kosong dan Camoufox gagal (NS_ERROR_NET_INTERRUPT).
+      - ./backend/GeoLite2-City.mmdb:/usr/local/lib/python3.11/site-packages/camoufox/GeoLite2-City.mmdb:ro
+      - ./.env:/data/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    shm_size: "1gb"
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "2.0"
+        reservations:
+          memory: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s               # boot pertama: python -m camoufox fetch (~1.3GB)
+
+  # ---------- Web dashboard (Next.js) ----------
+  webapp:
+    build:
+      context: ./webapp
+      args:
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Kling Account Maker}
+    image: kling-maker/webapp
+    container_name: kling-webapp
+    environment:
+      # login dashboard — dibaca saat runtime (bukan build). Isi via deploy/init-user.sh
+      DASHBOARD_USER: ${DASHBOARD_USER:?DASHBOARD_USER belum diisi di .env (bash deploy/init-user.sh)}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?DASHBOARD_PASSWORD belum diisi di .env}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET belum diisi di .env (bash deploy/init-user.sh)}
+      API_BASE_URL: http://backend:8000
+    ports:
+      # hanya localhost (ekspos lewat cloudflared / reverse proxy)
+      - "127.0.0.1:${DASHBOARD_PORT:-3201}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------- Creator on-demand (profile "creator") ----------
+  # Biasanya tidak perlu: pakai tombol Run Now / POST /api/runs (jalan di dalam backend).
+  # Pakai ini hanya kalau backend mati:  docker compose run --rm creator --pre-create 3
+  # Jangan jalankan bersamaan dengan backend yang sedang batch (RAM/CPU & batas harian sama).
+  creator:
+    build:
+      context: ./backend
+    image: kling-maker/backend
+    container_name: kling-creator
+    profiles: ["creator"]
+    env_file: .env
+    environment:
+      TZ: Asia/Jakarta
+      DATABASE_URL: ${DATABASE_URL:-}
+      SQLITE_PATH: /data/db/kling_accounts.db
+      DATA_DIR: /data/db
+      COOKIES_DIR: /data/cookies
+      RESULT_DIR: /data/result
+      LOG_DIR: /data/logs
+      EXPORT_DIR: /data/exports
+      ENV_FILE: /data/.env
+      DISPLAY: ":99"
+      XDG_CACHE_HOME: /app/camoufox_cache
+      PYTHONUNBUFFERED: "1"
+    entrypoint: ["/app/entrypoint.sh", "python", "account_creator.py"]
+    command: ["--pre-create", "1"]
+    volumes:
+      - ./backend/data:/data/db
+      - ./backend/logs:/data/logs
+      - ./backend/exports:/data/exports
+      - ./backend/cookies:/data/cookies
+      - ./backend/result:/data/result
+      - ./backend/camoufox_cache:/app/camoufox_cache
+      - ./backend/domain.txt:/app/domain.txt:ro
+      - ./backend/config.json:/app/config.json:ro
+      - ./backend/GeoLite2-City.mmdb:/usr/local/lib/python3.11/site-packages/camoufox/GeoLite2-City.mmdb:ro
+      - ./.env:/data/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    shm_size: "1gb"

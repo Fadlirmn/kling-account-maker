@@ -1,0 +1,23 @@
+# HTTP + env
+requests>=2.31.0
+python-dotenv>=1.0.0
+httpx
+
+# Browser anti-detect (pin: patch_playwright.sh bergantung layout bundle)
+camoufox[geoip]==0.4.11
+playwright==1.60.0
+
+# Database — PostgreSQL (psycopg 3) atau SQLite
+sqlalchemy>=2.0
+psycopg[binary]>=3.2
+
+# API + scheduler
+fastapi>=0.115
+uvicorn[standard]>=0.30
+apscheduler>=3.10,<4
+
+# Export
+openpyxl>=3.1
+
+# Test
+pytest>=8

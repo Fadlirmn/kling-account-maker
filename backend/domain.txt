@@ -1,0 +1,15 @@
+# domain.txt — Custom domain untuk mode EMAIL_PROVIDER=webhook
+# ─────────────────────────────────────────────────────────────────────────────
+# FORMAT: 1 domain per baris; baris # = komentar.
+# Kosongkan jika ingin pakai CUSTOM_DOMAINS di .env.
+#
+# CARA KERJA:
+# - Domain dirotasi interleave per TLD (biz.id / my.id / ...) agar satu TLD tidak dihajar berturut
+# - Email: {EMAIL_PREFIX}<random10>@<domain>
+# - OTP diterima via Cloudflare Email Routing → Worker (CLOUDFLARE_WORKER_URL + WEBHOOK_OTP_PATH)
+# - Domain rate-limit → blacklist sementara (memori); domain ditolak site → tabel banned_domains (DB)
+#
+# CONTOH:
+# mail.contoh.biz.id
+# otp.contoh.my.id
+# ─────────────────────────────────────────────────────────────────────────────

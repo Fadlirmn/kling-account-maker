@@ -32,7 +32,7 @@ export const NAV_SECTIONS: NavSection[] = [
 /** Tab di dalam halaman Settings (bukan item sidebar). */
 export const SETTINGS_TABS: NavLink[] = [
   { href: "/settings", label: "Umum", icon: "tune", title: "Settings", sub: "Scheduler, batch, provider email, batas harian", exact: true },
-  { href: "/settings/logs", label: "Logs", icon: "terminal", title: "Settings · Logs", sub: "Log creator saat ini (live)", detailSub: "Detail log" },
+  { href: "/settings/logs", label: "Logs", icon: "terminal", title: "Settings · Logs", sub: "Log creator saat ini (live)" },
   { href: "/settings/users", label: "User", icon: "group", title: "Settings · User", sub: "Akun dashboard" },
 ];
 

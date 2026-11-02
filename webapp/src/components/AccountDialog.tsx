@@ -84,7 +84,7 @@ export function AccountDialog({ accountId, onClose, onChanged }: { accountId: nu
             <KV k="Proxy" v={<span className="font-mono text-[12px] break-all">{acc.proxy || "— (direct)"}</span>} />
             <KV k="Attempt" v={acc.attempts} />
             <KV k="Credits / plan" v={`${acc.credits || "—"} / ${acc.plan || "—"}`} />
-            <KV k="Run" v={acc.run_id ? (isAdmin ? <Button variant="text" size="sm" href={`/settings/logs/${acc.run_id}`} icon="terminal" className="-ml-2 h-7">#{acc.run_id}</Button> : `#${acc.run_id}`) : "—"} />
+            <KV k="Batch" v={acc.run_id ? `#${acc.run_id}` : "—"} />
             <KV k="Dibuat" v={`${fmtDateTime(acc.created_at)} WIB`} />
             <KV k="Diubah" v={`${fmtDateTime(acc.updated_at)} WIB`} />
             <KV k="Cookies" v={acc.has_cookies ? "tersimpan" : "tidak ada"} />

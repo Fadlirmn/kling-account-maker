@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, Loading, PageBar, Pill } from "@/components/ui";
+import { Card, Loading, PageBar } from "@/components/ui";
 import { Alert } from "@/components/Alert";
 import { Empty } from "@/components/Empty";
 import { StopRunButton } from "@/components/StopRunButton";
 import { LogView } from "@/components/LogView";
-import { apiGet, fmtDateTime, relTime, type Run, type Summary } from "@/lib/api";
+import { apiGet, relTime, type Run, type Summary } from "@/lib/api";
 
 /** Konsol log creator: hanya log yang sedang / terakhir berjalan, live. Tanpa daftar run. */
 export default function Logs() {
@@ -45,24 +45,9 @@ export default function Logs() {
       ) : !current ? (
         <Card><Empty what="log creator" icon="terminal" hint="Log muncul di sini saat batch pertama berjalan (jadwal / isi ulang di Settings)." /></Card>
       ) : (
-        <Card
-          pad0
-          className="overflow-hidden"
-          title={
-            <span className="flex items-center gap-2">
-              Log creator
-              {running ? <Pill sm tone="info" pulse>berjalan</Pill> : <Pill sm tone={current.status === "failed" ? "err" : current.status === "partial" ? "warn" : "success"}>{current.status === "failed" ? "gagal" : current.status === "partial" ? "sebagian" : "selesai"}</Pill>}
-            </span>
-          }
-          desc={`${fmtDateTime(current.started_at)} WIB · ${current.created_ok} akun dibuat · ${current.failed} gagal`}
-        >
-          <div className="px-4 pb-4">
-            {current.error_message && (
-              <Alert tone="err" compact className="mb-3">
-                <span className="font-mono text-[12px]">{current.error_message}</span>
-              </Alert>
-            )}
-            <LogView key={current.id} runId={current.id} status={current.status} initialLog={null} maxHeight={640} />
+        <Card pad0 className="overflow-hidden">
+          <div className="p-3">
+            <LogView key={current.id} runId={current.id} status={current.status} initialLog={null} maxHeight={680} />
           </div>
         </Card>
       )}

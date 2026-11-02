@@ -15,6 +15,9 @@ def eng(monkeypatch, tmp_path):
     init_db(e)
     from core import config
     monkeypatch.setattr(config, "KLING_DEFAULT_PASSWORD", "Pw#12345")
+    # default config = webhook (butuh CLOUDFLARE_WORKER_URL); tes pakai 1secmail di config + tabel settings
+    monkeypatch.setattr(config, "EMAIL_PROVIDER", "1secmail")
+    repo.save_settings(e, {"email_provider": "1secmail"})
     monkeypatch.setattr(config, "LOG_DIR", tmp_path)
     monkeypatch.setattr(config, "RESULTS_FILE", tmp_path / "results.txt")
     monkeypatch.setattr(config, "COOKIES_DIR", tmp_path)

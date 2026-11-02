@@ -8,7 +8,7 @@
     "enabled": true
   },
   "email": {
-    "provider": "1secmail",
+    "provider": "webhook",
     "allow_gptmail_fallback": true,
     "prefix": "kling_",
     "sender_filter": [

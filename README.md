@@ -44,7 +44,7 @@ scheduler atau CLI.
 |---|---|
 | Backend | Python 3.11 · FastAPI + Uvicorn · APScheduler · SQLAlchemy 2 Core (psycopg 3 / SQLite WAL) · openpyxl · pytest |
 | Browser | Camoufox 0.4.11 (Firefox anti-detect, geoip dari proxy) · Playwright 1.60 · Xvfb `:99` di container |
-| Email/OTP | Cloudflare Email Routing → Worker (webhook), Go TempMail, 1secmail, mail.tm, GPTMail |
+| Email/OTP | **webhook** (default): Cloudflare Email Routing catch-all → Worker → receiver repo `Cloudflared_webhook` (prefix `kling_` → `KLING_DB`, poll `GET /get-otp`); fallback Go TempMail, 1secmail, mail.tm, GPTMail |
 | Frontend | Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind CSS 3 (token CSS var) · Recharts · Material Symbols |
 | Auth | Cookie sesi HMAC-SHA256 (Web Crypto, edge middleware) · user tabel `users` (scrypt) dengan role **admin** / **member**; role dicek live tiap request. Member hanya distribusi akun: halaman Accounts, tandai dipakai/belum, export, unduh cookies — tanpa Dashboard/Settings/User, hapus, atau ubah status |
 | Runtime | Docker Compose (`kling-backend` 8010, `kling-webapp` 3201, profile `creator`) · Node 22 alpine · python:3.11-slim |

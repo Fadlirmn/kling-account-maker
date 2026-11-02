@@ -1,9 +1,13 @@
 """
-core.mail.webhook — custom domain + Cloudflare Email Routing → Worker.
+core.mail.webhook — custom domain + Cloudflare Email Routing (catch-all) → Worker → Cloudflared_webhook.
 
-Email: {EMAIL_PREFIX}{random10}@{domain dari core.domains}.
-OTP:   GET {CLOUDFLARE_WORKER_URL}{WEBHOOK_OTP_PATH}?email=...  → {"status":"success","otp":"123456"}
-Diport dari engine sumber; endpoint spesifik site lama dibuang.
+Receiver = repo Cloudflared_webhook (FastAPI, webhook_receiver.py). Email prefix `kling_` di-route ke KLING_DB
+di receiver; OTP 6-digit diekstrak di sana (extract_kling_otp).
+
+Email: {EMAIL_PREFIX}{random10}@{domain dari core.domains} (domain.txt = pool Domain-manage).
+OTP:   GET {CLOUDFLARE_WORKER_URL}{WEBHOOK_OTP_PATH}?email=...  → {"status":"success","otp":"123456","service":"Kling AI"}
+       (receiver menghapus OTP setelah diambil; "pending" = belum masuk)
+Health: GET {CLOUDFLARE_WORKER_URL}/health → {"status":"healthy","databases":{...}}
 """
 import random
 import string
@@ -72,13 +76,23 @@ class WebhookMail(MailClient):
 
 
 def webhook_health() -> tuple[bool, str]:
-    """Cek /health worker (dipakai diagnosa). Return (ok, pesan)."""
+    """Cek /health receiver Cloudflared_webhook (dipakai diagnosa). Return (ok, pesan)."""
     if not config.CLOUDFLARE_WORKER_URL:
         return False, "CLOUDFLARE_WORKER_URL kosong"
     try:
         t0 = time.time()
         r = requests.get(f"{config.CLOUDFLARE_WORKER_URL}/health", timeout=8)
         ms = int((time.time() - t0) * 1000)
-        return r.status_code == 200, f"HTTP {r.status_code} ({ms} ms)"
+        status = ""
+        try:
+            data = r.json()
+            status = str(data.get("status", ""))
+            kling_db = next((v for k, v in (data.get("databases") or {}).items() if "kling" in k.lower()), None)
+            if kling_db is not None and kling_db != "ok":
+                return False, f"HTTP {r.status_code} {status}; KLING_DB {kling_db} ({ms} ms)"
+        except ValueError:
+            pass
+        ok = r.status_code == 200 and status in ("", "healthy")
+        return ok, f"HTTP {r.status_code} {status} ({ms} ms)".replace("  ", " ")
     except Exception as e:
         return False, str(e)

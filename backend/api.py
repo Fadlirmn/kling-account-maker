@@ -478,6 +478,10 @@ def test_diagnostics():
     out["proxies"] = {"total": proxy_mod.proxy_count(), "bad": proxy_mod.bad_proxy_count(), "croxy": bool(config.CROXY_BASE_PROXY)}
     out["domains"] = {"total": domains_mod.domain_count(), "banned": len(domains_mod.get_db_banned_domains())}
     out["email"] = {"provider": config.EMAIL_PROVIDER, "chain": provider_chain_safe()}
+    if config.CLOUDFLARE_WORKER_URL:
+        from core.mail.webhook import webhook_health
+        ok, msg = webhook_health()
+        out["email"]["webhook"] = {"ok": ok, "url": config.CLOUDFLARE_WORKER_URL, "detail": msg}
     out["flow"] = {"implemented": runner.flow_implemented(), "module": f"sites/{config.SITE_NAME}/flow.py"}
     out["creator_running"] = _RUNNING.is_set()
     out["last_run"] = repo.latest_run(engine)

@@ -6,10 +6,130 @@
 # CARA KERJA:
 # - Domain dirotasi interleave per TLD (biz.id / my.id / ...) agar satu TLD tidak dihajar berturut
 # - Email: {EMAIL_PREFIX}<random10>@<domain>
-# - OTP diterima via Cloudflare Email Routing → Worker (CLOUDFLARE_WORKER_URL + WEBHOOK_OTP_PATH)
+# - OTP diterima via Cloudflare Email Routing (catch-all) → Worker → Cloudflared_webhook receiver
+#   (CLOUDFLARE_WORKER_URL = URL receiver, WEBHOOK_OTP_PATH=/get-otp). Email prefix kling_ → DB Kling di receiver.
+# - Daftar di bawah = pool domain Domain-manage/domain.txt (catch-all sudah aktif via dns_routing.sh)
 # - Domain rate-limit → blacklist sementara (memori); domain ditolak site → tabel banned_domains (DB)
 #
 # CONTOH:
 # mail.contoh.biz.id
 # otp.contoh.my.id
 # ─────────────────────────────────────────────────────────────────────────────
+alamio.biz.id
+bajuboutique.biz.id
+bajubrand.biz.id
+bajucantik.biz.id
+bajucollect.biz.id
+bajucorner.biz.id
+bajuholic.biz.id
+bajukekinian.biz.id
+bajunik.biz.id
+bajustreet.biz.id
+bajustudio.biz.id
+bizcraftia.biz.id
+brandovia.biz.id
+bynexa.biz.id
+chcicnova.biz.id
+cheesecake.biz.id
+chicboutique.biz.id
+chicfusion.biz.id
+chicspace.biz.id
+chicstyle.biz.id
+clickastra.biz.id
+coffeemilk.biz.id
+cookingcake.biz.id
+coolvita.biz.id
+dressify.biz.id
+dressora.biz.id
+fashionara.biz.id
+fashioncorner.biz.id
+fashionovaid.biz.id
+fashionque.biz.id
+fashiontide.biz.id
+gayacorner.biz.id
+gayakita.biz.id
+gayanova.biz.id
+gayastory.biz.id
+gayaverse.biz.id
+glamboutique.biz.id
+glamcollect.biz.id
+glamcorner.biz.id
+glamfit.biz.id
+glamifyid.biz.id
+glamnest.biz.id
+glamoura.biz.id
+glamspaceid.biz.id
+gozyra.biz.id
+grevora.my.id
+healio.biz.id
+jajanaja.web.id
+jalanpulang.my.id
+kalvio.my.id
+kiniso.biz.id
+kinisojaya.biz.id
+kurmagroup.biz.id
+langitbiru.my.id
+leafio.biz.id
+livra.biz.id
+looknova.biz.id
+looknstyle.biz.id
+makandulu.biz.id
+matchaa.biz.id
+mbgdulu.my.id
+mednix.my.id
+modapoint.biz.id
+modastra.biz.id
+modishlook.biz.id
+mynexa.biz.id
+navixo.my.id
+novaspace.biz.id
+nutrivo.biz.id
+ootdindo.biz.id
+orvena.biz.id
+outfitcorner.biz.id
+outfitfusion.biz.id
+outfitlab.biz.id
+outfitnesia.biz.id
+outfitspace.biz.id
+outfitverse.biz.id
+pureva.biz.id
+ravion.my.id
+rentara.biz.id
+revnix.my.id
+rovia.biz.id
+ruangpagi.my.id
+scaleforge.biz.id
+scalevora.biz.id
+sehava.biz.id
+sewarapi.biz.id
+silvara.my.id
+solvena.biz.id
+strategrow.biz.id
+styleboutique.biz.id
+stylecorner.biz.id
+styledupa.biz.id
+styleloka.biz.id
+styleora.biz.id
+styleverse.biz.id
+stylezeno.biz.id
+stylishindo.biz.id
+suarasenja.my.id
+supadupafit.biz.id
+termurah.biz.id
+trendboutique.biz.id
+trendculture.biz.id
+trendivibe.biz.id
+trendloka.biz.id
+trendwear.biz.id
+trendzoneid.biz.id
+tulis.biz.id
+urbanwearid.biz.id
+usahaengine.biz.id
+usevora.biz.id
+velnora.my.id
+velvique.biz.id
+vitlora.my.id
+wearcorner.biz.id
+wearcraft.biz.id
+wearculture.biz.id
+wearfusion.biz.id

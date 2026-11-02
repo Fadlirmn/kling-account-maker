@@ -24,8 +24,9 @@
 
 Pembuat pool akun standby kling.ai: batch pembuatan akun lewat browser anti-detect
 (Camoufox/Firefox), OTP dari provider email sementara / webhook domain sendiri, proxy rotasi,
-disimpan di PostgreSQL/SQLite, dikontrol dari dashboard (Run Now, jadwal harian, isi ulang
-otomatis sampai target pool, riwayat run + log, ekspor akun).
+disimpan di PostgreSQL/SQLite, dikontrol dari dashboard (jadwal harian, isi ulang otomatis sampai target pool,
+riwayat run + log, kelola & ekspor akun). Tidak ada trigger manual di dashboard: batch jalan dari
+scheduler atau CLI.
 
 > **Status flow site:** `backend/sites/kling/flow.py` masih **stub** (`IS_STUB = True`). Seluruh
 > infrastruktur jalan; setiap batch berakhir `NOT_IMPLEMENTED` sampai langkah signup kling.ai
@@ -59,7 +60,8 @@ docker compose up -d --build                  # backend 127.0.0.1:8010 + webapp 
 curl http://127.0.0.1:8010/api/health         # {"ok":true,"db":"sqlite|postgresql","flow_implemented":false,...}
 ```
 
-Buka http://127.0.0.1:3201 → login → **Run Now** (topbar) atau **Settings → Logs → Run Now**.
+Buka http://127.0.0.1:3201 → login. Batch pertama jalan sesuai jadwal (`Settings → Umum`) atau isi ulang
+otomatis; untuk memicu sekarang pakai CLI: `docker compose run --rm creator --pre-create 3`.
 Sebelum ada akun, semua blok menampilkan `Data riil <objek> akan tampil di sini setelah run pertama.`
 
 ## Arsitektur
@@ -118,9 +120,9 @@ data dummy itu.
 
 ## Creator
 
-- **Dari dashboard / API**: Run Now (pilih jumlah & worker), atau
-  `curl -X POST http://127.0.0.1:8010/api/runs -H 'content-type: application/json' -d '{"trigger":"manual","count":5}'`
-  (202; 409 kalau sedang jalan). Stop: `POST /api/runs/stop` (slot baru dibatalkan, attempt berjalan diselesaikan).
+- **Pemicu**: scheduler (batch harian `schedule_time`, isi ulang ke `standby_target`) atau CLI. Tidak ada
+  tombol Run Now / `POST /api/runs`. Stop batch yang sedang jalan: `POST /api/runs/stop` (tombol Stop di topbar
+  muncul saat running; slot baru dibatalkan, attempt berjalan diselesaikan).
 - **CLI tanpa backend**: `docker compose run --rm creator --pre-create 3` atau lokal
   `cd backend && .venv/bin/python account_creator.py --pre-create 3 --workers 2`.
 - Tiap slot: pilih provider email (fallback berantai), proxy berikutnya, launch Camoufox
@@ -180,7 +182,7 @@ cd webapp && npm install && API_BASE_URL=http://localhost:8000 npm run dev   # h
 1. Riset halaman signup (email+password? OTP kode atau link? captcha/Cloudflare?).
 2. Isi `backend/sites/kling/selectors.py`; set `site.signup_url`, `email.otp_phrases`, `email.sender_filter` di `backend/config.json`.
 3. Implementasi `create_account()` di `backend/sites/kling/flow.py` sesuai kontrak docstring; hapus `IS_STUB`.
-4. Uji: `DEBUG_SCREENSHOTS=true .venv/bin/python test_single.py`, lalu Run Now dari dashboard.
+4. Uji: `DEBUG_SCREENSHOTS=true .venv/bin/python test_single.py`, lalu `account_creator.py --pre-create 1`.
 
 ## Troubleshooting
 

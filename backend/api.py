@@ -4,6 +4,7 @@ REST API (FastAPI) + APScheduler untuk dashboard Kling Account Maker.
   uvicorn api:app --host 0.0.0.0 --port 8000
 
 Satu run (batch pembuatan akun) berjalan pada satu waktu — dijaga _RUNNING + _claim_running().
+Batch dipicu scheduler (harian / isi ulang) atau CLI account_creator.py — tidak ada trigger manual dari API.
 Jadwal harian dari settings.schedule_time (WIB) dan isi ulang otomatis sampai
 settings.standby_target tiap settings.refill_interval_minutes.
 """
@@ -301,46 +302,6 @@ def get_run_log(run_id: int, tail: int = Query(2000, ge=1, le=20000)):
     lines = text.splitlines()
     return {"run_id": run_id, "status": run["status"], "source": source,
             "truncated": len(lines) > tail, "log": "\n".join(lines[-tail:])}
-
-
-def _int_in(body: dict, key: str, lo: int, hi: int) -> int | None:
-    v = body.get(key)
-    if v is None:
-        return None
-    if not isinstance(v, int) or isinstance(v, bool) or not lo <= v <= hi:
-        raise HTTPException(status_code=422, detail=f"{key} harus bilangan bulat {lo}..{hi}")
-    return v
-
-
-@app.post("/api/runs")
-def start_run(body: dict | None = None):
-    if _RUNNING.is_set():
-        raise HTTPException(status_code=409, detail="Creator sedang berjalan")
-    body = body or {}
-    trigger = body.get("trigger", "manual")
-    if trigger not in repo.RUN_TRIGGERS:
-        raise HTTPException(status_code=422, detail="trigger tidak valid")
-    count = _int_in(body, "count", 1, 500)
-    workers = _int_in(body, "workers", 1, 16)
-    provider = body.get("provider")
-    if provider is not None and provider not in ("webhook", "local_tempmail", "1secmail", "mailtm", "gptmail"):
-        raise HTTPException(status_code=422, detail="provider tidak valid")
-    if not _claim_running():
-        raise HTTPException(status_code=409, detail="Creator sedang berjalan")
-    _STOP.clear()
-
-    def worker():
-        try:
-            runner.run_batch(_engine(), trigger=trigger, count=count, workers=workers,
-                             provider=provider, stop_event=_STOP)
-        except Exception as e:  # noqa: BLE001
-            traceback.print_exc()
-            print(f"run_batch error: {describe_exc(e)}")
-        finally:
-            _RUNNING.clear()
-
-    threading.Thread(target=worker, daemon=True, name="batch").start()
-    return JSONResponse({"started": True, "trigger": trigger, "count": count, "workers": workers}, status_code=202)
 
 
 @app.post("/api/runs/stop")

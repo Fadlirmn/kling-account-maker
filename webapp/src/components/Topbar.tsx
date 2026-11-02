@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icon";
 import { Pill } from "./ui";
-import { RunNowButton } from "./RunNowButton";
 import { StopRunButton } from "./StopRunButton";
 import { pageMeta } from "./nav";
 import type { Summary } from "@/lib/api";
@@ -52,7 +51,6 @@ export function Topbar({ onMenu, menuOpen, summary }: { onMenu: () => void; menu
           )}
         </div>
         {running && <StopRunButton stopping={summary?.stop_requested} compact />}
-        <RunNowButton running={running} compact />
       </div>
     </header>
   );

@@ -32,6 +32,11 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
   const c = useThemeColors(VARS);
   if (!c) return <div className="h-[320px] w-full" aria-hidden="true" />;
   const rows = data.map((p) => ({ ...p, label: dayLabel(p.day) }));
+  // sumbu Y: kelipatan 50, minimal 0–50
+  const STEP = 50;
+  const peak = Math.max(0, ...data.map((p) => Math.max(p.created, p.failed)));
+  const top = Math.max(STEP, Math.ceil(peak / STEP) * STEP);
+  const ticks = Array.from({ length: top / STEP + 1 }, (_, i) => i * STEP);
   return (
     <div className="h-[320px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -44,7 +49,7 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
           </defs>
           <CartesianGrid stroke={c["line-soft"]} vertical={false} />
           <XAxis dataKey="label" tick={{ fill: c.text3, fontSize: 11 }} tickLine={false} axisLine={{ stroke: c.divider }} />
-          <YAxis allowDecimals={false} tick={{ fill: c.text3, fontSize: 11 }} tickLine={false} axisLine={false} width={36} />
+          <YAxis domain={[0, top]} ticks={ticks} interval={0} allowDecimals={false} tick={{ fill: c.text3, fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
           <Tooltip
             contentStyle={{ background: c["surface-container"], border: `1px solid ${c.divider}`, borderRadius: 12, fontSize: 12, color: c.text2 }}
             labelStyle={{ color: c.text, fontWeight: 700 }}

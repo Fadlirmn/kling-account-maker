@@ -51,26 +51,9 @@ def test_settings_validation(client):
     assert r.json()["workers"] == 3 and r.json()["schedule_time"] == "05:30" and r.json()["config_version"] == 2
 
 
-def test_runs_concurrent_guard(client, monkeypatch):
-    calls = []
-
-    def slow_run(engine, trigger="manual", count=None, workers=None, provider=None, stop_event=None, log=print):
-        calls.append((trigger, count, workers))
-        time.sleep(0.3)
-        return 1
-
-    monkeypatch.setattr(runner, "run_batch", slow_run)
-    assert client.post("/api/runs/stop").status_code == 409
-    r1 = client.post("/api/runs", json={"trigger": "manual", "count": 2, "workers": 1})
-    assert r1.status_code == 202 and r1.json()["count"] == 2
-    assert client.post("/api/runs", json={"trigger": "manual"}).status_code == 409
-    assert client.post("/api/runs/stop").status_code == 200
-    time.sleep(0.5)
-    assert calls == [("manual", 2, 1)]
-    assert client.post("/api/runs", json={"trigger": "ngaco"}).status_code == 422
-    assert client.post("/api/runs", json={"count": 0}).status_code == 422
-    assert client.post("/api/runs", json={"trigger": "manual"}).status_code == 202
-    time.sleep(0.5)
+def test_tanpa_trigger_manual(client):
+    assert client.post("/api/runs", json={"trigger": "manual"}).status_code == 405   # Run Now dihapus
+    assert client.post("/api/runs/stop").status_code == 409                        # tidak ada batch berjalan
 
 
 def test_runs_dan_log(client, test_engine, tmp_path, monkeypatch):

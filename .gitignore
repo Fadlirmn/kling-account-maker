@@ -41,4 +41,4 @@ webapp/tsconfig.tsbuildinfo
 backend/config.local.json
 
 # screenshot/log lokal di root
-logs/
+/logs/

@@ -25,8 +25,7 @@ if [ -f .env ]; then
     echo "$db" | grep -q "YOUR_" && fail "DATABASE_URL masih placeholder" || ok "DATABASE_URL format valid"
     echo "$db" | grep -q "@localhost\|@127.0.0.1" && warn "DATABASE_URL pakai localhost — dari container harus host.docker.internal"
   else fail "DATABASE_URL format salah (harus postgresql://user:pass@host:5432/db)"; fi
-  port=$(envval DASHBOARD_PORT); port=${port:-3201}
-  api_port=$(envval API_PORT); api_port=${api_port:-8010}
+  port=3201; api_port=8010   # fixed di docker-compose.yml
   u=$(envval DASHBOARD_USER); pw=$(envval DASHBOARD_PASSWORD); sec=$(envval AUTH_SECRET)
   if [ -z "$u" ] || [ -z "$pw" ] || echo "$pw" | grep -q "YOUR_"; then fail "DASHBOARD_USER/DASHBOARD_PASSWORD belum diisi → bash deploy/init-user.sh <user> <password>";
   else ok "login dashboard: user '$u'"; fi
@@ -71,10 +70,10 @@ else ok "proxy terkonfigurasi"; fi
 
 echo "== Port =="
 if ss -ltn 2>/dev/null | grep -q ":$port "; then
-  docker ps --format '{{.Names}} {{.Ports}}' | grep -q "kling-webapp" && ok "port $port dipakai kling-webapp (sudah jalan)" || fail "port $port dipakai proses lain — ubah DASHBOARD_PORT di .env"
+  docker ps --format '{{.Names}} {{.Ports}}' | grep -q "kling-webapp" && ok "port $port dipakai kling-webapp (sudah jalan)" || fail "port $port dipakai proses lain — ubah port webapp di docker-compose.yml"
 else ok "port $port bebas"; fi
 if ss -ltn 2>/dev/null | grep -q ":$api_port "; then
-  docker ps --format '{{.Names}} {{.Ports}}' | grep -q "kling-backend" && ok "port $api_port dipakai kling-backend (sudah jalan)" || fail "port $api_port dipakai proses lain — ubah API_PORT di .env"
+  docker ps --format '{{.Names}} {{.Ports}}' | grep -q "kling-backend" && ok "port $api_port dipakai kling-backend (sudah jalan)" || fail "port $api_port dipakai proses lain — ubah port backend di docker-compose.yml"
 else ok "port $api_port bebas"; fi
 
 echo "== Compose =="

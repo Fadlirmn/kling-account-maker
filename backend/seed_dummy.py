@@ -27,9 +27,9 @@ import db
 import repo
 from models import init_db, kling_accounts as acc_t, runs as runs_t
 
-DUMMY_DOMAIN = "dummy.kling.test"
+DUMMY_DOMAIN = str(config.CONFIG.get("seed", {}).get("domain") or "dummy.kling.test")
 PASSWORD = config.KLING_DEFAULT_PASSWORD or "Kling#Maker2026"   # satu password untuk semua akun & user dummy
-DUMMY_USERS = ["ops", "qa", "viewer"]                            # user dashboard dummy (Settings > User)
+DUMMY_USERS = list(config.CONFIG.get("seed", {}).get("users") or ["ops", "qa", "viewer"])   # dari config.json "seed.users"
 WIB = timezone(timedelta(hours=7))
 PROVIDERS = ["webhook", "1secmail", "mailtm", "webhook", "webhook"]
 FAIL_CODES = ["otp timeout", "PROXY_FLAGGED_CLOUDFLARE", "email input not found", "exception: NS_ERROR_NET_INTERRUPT",
@@ -161,8 +161,9 @@ def seed(engine, days: int, per_day: int) -> None:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="Seed data dummy Kling Account Maker")
-    p.add_argument("--days", type=int, default=14)
-    p.add_argument("--per-day", type=int, default=10)
+    seed_cfg = config.CONFIG.get("seed", {})
+    p.add_argument("--days", type=int, default=int(seed_cfg.get("days", 14)))
+    p.add_argument("--per-day", type=int, default=int(seed_cfg.get("per_day", 10)))
     p.add_argument("--reset", action="store_true", help="hapus data dummy lama dulu")
     p.add_argument("--seed", type=int, default=42)
     a = p.parse_args()

@@ -60,7 +60,7 @@ webapp/
 | `AUTH_SECRET` | kunci HMAC cookie sesi (wajib) |
 | `DASHBOARD_USER` / `DASHBOARD_PASSWORD` | admin env (fallback saat tabel users kosong); isi via `bash deploy/init-user.sh` |
 | `API_BASE_URL` | base FastAPI untuk server component (default `http://localhost:8000`; compose `http://backend:8000`). Client selalu lewat `/api/backend` |
-| `DASHBOARD_PORT` | port host (default 3201) |
+| port host | 3201, fixed di `docker-compose.yml` (bukan .env) |
 
 ## 4. Jalankan & deploy
 

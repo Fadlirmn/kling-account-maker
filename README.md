@@ -103,9 +103,10 @@ dengan kode error terakhir. Status run: `running → success | partial | failed`
 
 | File | Isi | Contoh |
 |---|---|---|
-| `backend/config.json` | setting aplikasi non-rahasia, **ikut repo**: `site.signup_url`, `scheduler.enabled`, `email.*` (provider, prefix, sender_filter, otp_phrases, otp_length, webhook_otp_path, custom_domains), `proxy.bad_cooldown`, `browser.*`, `defaults.*` (nilai awal tabel settings: workers, batch_size, max_daily_success, standby_target, schedule_time, …) | `"email": {"provider": "mailtm"}` |
+| `backend/config.json` | setting aplikasi non-rahasia, **ikut repo**: `site.signup_url`, `scheduler.enabled`, `email.*` (provider, prefix, sender_filter, otp_phrases, otp_length, webhook_otp_path, custom_domains), `proxy.bad_cooldown`, `browser.*`, `defaults.*` (nilai awal tabel settings: workers, batch_size, max_daily_success, standby_target, schedule_time, …), `seed.*` (seed_dummy) | `"email": {"provider": "mailtm"}` |
 | `backend/config.local.json` | override per mesin (gitignored), struktur sama | `{"defaults": {"workers": 1}}` |
-| `.env` | **kredensial & deploy saja**: `DATABASE_URL`, `DASHBOARD_USER/PASSWORD`, `AUTH_SECRET`, `KLING_DEFAULT_PASSWORD`, `CLOUDFLARE_WORKER_URL`, `TEMPMAIL_API_URL/SECRET`, `PROXY_LIST`, `CROXY_BASE_PROXY`, port (`DASHBOARD_PORT`, `API_PORT`), `NEXT_PUBLIC_APP_NAME` | lihat `.env.example` |
+| `.env` | **kredensial saja**: `DATABASE_URL`, `DASHBOARD_USER/PASSWORD`, `AUTH_SECRET`, `KLING_DEFAULT_PASSWORD`, `CLOUDFLARE_WORKER_URL`, `TEMPMAIL_API_URL/SECRET`, `PROXY_LIST`, `CROXY_BASE_PROXY` | lihat `.env.example` |
+| `docker-compose.yml` | port host (backend 8010, webapp 3201), nama app, path /data | — |
 | tabel `settings` (DB) | nilai runtime yang diubah dari dashboard Settings; menimpa `defaults.*` | — |
 
 Prioritas backend: **env var > config.local.json > config.json > default kode**. Env var dengan nama lama

@@ -1,6 +1,6 @@
 services:
   # ---------- Backend: FastAPI + APScheduler + creator (Camoufox/Firefox di Xvfb) ----------
-  # API di 127.0.0.1:${API_PORT:-8010} (internal: http://backend:8000).
+  # API di 127.0.0.1:8010 (internal: http://backend:8000). Port & nama app di file ini, bukan .env.
   # Batch harian (settings.schedule_time, default 03:00 WIB) + isi ulang pool standby
   # tiap settings.refill_interval_minutes. Satu batch pada satu waktu (_RUNNING).
   # Kredensial dari .env (env_file); konfigurasi non-rahasia dari backend/config.json.
@@ -21,12 +21,11 @@ services:
       LOG_DIR: /data/logs                # satu file log per run: /data/logs/run_<id>.log
       EXPORT_DIR: /data/exports
       ENV_FILE: /data/.env
-      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
       DISPLAY: ":99"                     # Xvfb (backend/entrypoint.sh) → Firefox headful, WebGL hidup
       XDG_CACHE_HOME: /app/camoufox_cache
       PYTHONUNBUFFERED: "1"
     ports:
-      - "127.0.0.1:${API_PORT:-8010}:8000"
+      - "127.0.0.1:8010:8000"
     volumes:
       - ./backend/data:/data/db          # SQLite fallback (kalau DATABASE_URL kosong)
       - ./backend/logs:/data/logs
@@ -63,7 +62,7 @@ services:
     build:
       context: ./webapp
       args:
-        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Kling Account Maker}
+        NEXT_PUBLIC_APP_NAME: "Kling Account Maker"
     image: kling-maker/webapp
     container_name: kling-webapp
     environment:
@@ -74,7 +73,7 @@ services:
       API_BASE_URL: http://backend:8000
     ports:
       # hanya localhost (ekspos lewat cloudflared / reverse proxy)
-      - "127.0.0.1:${DASHBOARD_PORT:-3201}:3000"
+      - "127.0.0.1:3201:3000"
     depends_on:
       backend:
         condition: service_healthy

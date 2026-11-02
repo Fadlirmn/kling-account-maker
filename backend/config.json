@@ -1,20 +1,20 @@
 {
-  "_comment": "Konfigurasi NON-rahasia Kling Account Maker. Kredensial (password, token, URL berkredensial, proxy) tetap di .env. Prioritas: env var > config.local.json > config.json > default kode. Bagian 'defaults' hanya nilai awal tabel settings (dashboard menimpa).",
-
+  "_comment": "Konfigurasi NON-rahasia Kling Account Maker. Kredensial (password, token, URL berkredensial, proxy) tetap di .env. Prioritas: env var > config.local.json > config.json > default kode. Bagian 'defaults' hanya nilai awal tabel settings (dashboard menimpa). 'seed' = parameter seed_dummy.py.",
   "site": {
     "name": "kling",
     "signup_url": ""
   },
-
   "scheduler": {
     "enabled": true
   },
-
   "email": {
     "provider": "1secmail",
     "allow_gptmail_fallback": true,
     "prefix": "kling_",
-    "sender_filter": ["kling", "klingai"],
+    "sender_filter": [
+      "kling",
+      "klingai"
+    ],
     "otp_phrases": [],
     "otp_length": 6,
     "otp_timeout": 180,
@@ -24,17 +24,14 @@
     "tempmail_domain_file": "",
     "tempmail_db_path": ""
   },
-
   "proxy": {
     "bad_cooldown": 300
   },
-
   "browser": {
     "locale": "en-US",
     "routing_allowlist": [],
     "ram_per_worker_mb": 700
   },
-
   "defaults": {
     "workers": 2,
     "browser_concurrency": 2,
@@ -50,5 +47,15 @@
     "debug_screenshots": false,
     "retention_days": 0,
     "results_file": "results_kling.txt"
+  },
+  "seed": {
+    "domain": "dummy.kling.test",
+    "days": 14,
+    "per_day": 10,
+    "users": [
+      "ops",
+      "qa",
+      "viewer"
+    ]
   }
 }

@@ -6,7 +6,7 @@ Isi DB dengan data dummy supaya dashboard punya isi sebelum flow kling.ai jadi.
   python seed_dummy.py --reset         # hapus semua akun dummy (@dummy.kling.test) & run dummy dulu
   python seed_dummy.py --days 30 --per-day 12
 
-Juga user dashboard dummy (DUMMY_USERS) dengan password yang sama dengan akun (PASSWORD).
+Juga user dashboard dummy (config.json seed.users) dengan password DASHBOARD_USER_DEFAULT_PASSWORD (.env).
 Data: run harian (scheduled) + beberapa manual/auto_refill, status campur success/partial/failed,
 log bergaya RunLogger; akun dengan status standby/active/exhausted/used/banned/failed,
 email *@dummy.kling.test, cookies JSON palsu, proxy ter-mask. Tidak menyentuh akun asli.
@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 from datetime import datetime, timedelta, timezone
 
@@ -30,6 +31,8 @@ from models import init_db, kling_accounts as acc_t, runs as runs_t
 DUMMY_DOMAIN = str(config.CONFIG.get("seed", {}).get("domain") or "dummy.kling.test")
 PASSWORD = config.KLING_DEFAULT_PASSWORD or "Kling#Maker2026"   # satu password untuk semua akun & user dummy
 DUMMY_USERS = list(config.CONFIG.get("seed", {}).get("users") or ["ops", "qa", "viewer"])   # dari config.json "seed.users"
+# password user dashboard dummy: .env DASHBOARD_USER_DEFAULT_PASSWORD, fallback DASHBOARD_PASSWORD, fallback PASSWORD akun
+USER_PASSWORD = os.getenv("DASHBOARD_USER_DEFAULT_PASSWORD", "").strip() or os.getenv("DASHBOARD_PASSWORD", "").strip() or PASSWORD
 WIB = timezone(timedelta(hours=7))
 PROVIDERS = ["webhook", "1secmail", "mailtm", "webhook", "webhook"]
 FAIL_CODES = ["otp timeout", "PROXY_FLAGGED_CLOUDFLARE", "email input not found", "exception: NS_ERROR_NET_INTERRUPT",
@@ -75,14 +78,14 @@ def _log(run_id: int, trigger: str, start: datetime, n: int, workers: int, ok_em
 
 
 def seed_users(engine) -> None:
-    """User dashboard dummy, idempoten: dibuat kalau belum ada, password selalu disamakan dengan PASSWORD."""
+    """User dashboard dummy, idempoten: dibuat kalau belum ada, password selalu disamakan dengan USER_PASSWORD."""
     for u in DUMMY_USERS:
         existing = next((x for x in repo.list_users(engine) if x["username"] == u), None)
         if existing:
-            repo.set_password(engine, existing["id"], PASSWORD)
+            repo.set_password(engine, existing["id"], USER_PASSWORD)
         else:
-            repo.create_user(engine, u, PASSWORD)
-    print(f"users: {', '.join(DUMMY_USERS)} (password = KLING_DEFAULT_PASSWORD)")
+            repo.create_user(engine, u, USER_PASSWORD)
+    print(f"users: {', '.join(DUMMY_USERS)} (password dari DASHBOARD_USER_DEFAULT_PASSWORD / DASHBOARD_PASSWORD)")
 
 
 def reset(engine) -> None:

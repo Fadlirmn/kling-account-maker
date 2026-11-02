@@ -46,10 +46,17 @@ function displayName(username: string): string {
 }
 const ROLE_LABEL: Record<UserRole, string> = { admin: "Admin", member: "Member" };
 
+/** Admin tanpa akhiran divisi (mis. hereacil) → kartu Admin bersama admin env. */
+function adminsWithoutDivision(users: DashboardUser[]) {
+  return users.filter((u) => u.role === "admin" && !divisionOf(u.username)).sort((a, b) => a.username.localeCompare(b.username));
+}
+
 function groupByDivision(users: DashboardUser[]) {
   const groups = [...DIVISIONS, OTHER].map((d) => ({ ...d, users: [] as DashboardUser[] }));
   for (const u of users) {
-    const g = groups.find((x) => x.id === divisionOf(u.username)) ?? groups[groups.length - 1];
+    const d = divisionOf(u.username);
+    if (!d && u.role === "admin") continue;   // admin tanpa divisi tampil di kartu Admin
+    const g = groups.find((x) => x.id === d) ?? groups[groups.length - 1];
     g.users.push(u);
   }
   // admin di atas, lalu member; masing-masing urut nama
@@ -130,37 +137,13 @@ export default function UsersSettingsPage() {
   if (data === undefined) return <Loading />;
   if (data === null) return <Alert tone="err" title="Daftar user tidak bisa dimuat">Backend tidak dapat dihubungi.</Alert>;
 
-  return (
-    <div className="max-w-[760px] w-full mx-auto flex flex-col gap-4">
-      <PageBar
-        meta={`Login sebagai ${data.me} · ${data.users.length} user${data.env_admin ? " + admin env" : ""}`}
-        right={<Button variant="primary" size="sm" icon="person_add" onClick={() => setAddOpen(true)}>Tambah User</Button>}
-      />
-      <FlashMsg msg={msg} />
 
-      {data.env_admin && (
-        <Card title="Admin" desc="Akun cadangan dari .env · ubah lewat deploy/init-user.sh" padSm>
-          <div className="flex items-center gap-3 py-1">
-            <Avatar name={data.env_admin} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 body2 text-text font-semibold">
-                <span className="truncate">{data.env_admin}</span>
-                <Pill sm>env</Pill>
-                {data.me_is_env_admin && <Pill tone="violet" sm>kamu</Pill>}
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {groupByDivision(data.users).map((g) => (
-        <Card key={g.id || "lainnya"} title={g.label} desc={`${g.users.filter((u) => u.role === "admin").length} admin · ${g.users.filter((u) => u.role !== "admin").length} member`} padSm>
-          <ul className="divide-y divide-line-soft">
-            {g.users.map((u) => {
-              const self = u.username === data.me;
-              const resetting = resetFor === u.id;
-              return (
-                <li key={u.id} className="py-2.5 flex flex-col gap-3">
+  // satu baris user (dipakai kartu Admin dan tiap divisi)
+  const UserRow = ({ u }: { u: DashboardUser }) => {
+    const self = u.username === data.me;
+    const resetting = resetFor === u.id;
+    return (
+<li className="py-2.5 flex flex-col gap-3">
                   <div className="flex items-center gap-3">
                     <Avatar name={displayName(u.username)} />
                     <div className="flex-1 min-w-0">
@@ -195,8 +178,45 @@ export default function UsersSettingsPage() {
                     </div>
                   )}
                 </li>
-              );
-            })}
+    );
+  };
+
+  return (
+    <div className="max-w-[760px] w-full mx-auto flex flex-col gap-4">
+      <PageBar
+        meta={`Login sebagai ${data.me} · ${data.users.length} user${data.env_admin ? " + admin env" : ""}`}
+        right={<Button variant="primary" size="sm" icon="person_add" onClick={() => setAddOpen(true)}>Tambah User</Button>}
+      />
+      <FlashMsg msg={msg} />
+
+      {(data.env_admin || adminsWithoutDivision(data.users).length > 0) && (
+        <Card title="Admin" desc="Akses penuh · admin env dari .env, lainnya dari tabel users" padSm>
+          <ul className="divide-y divide-line-soft">
+            {data.env_admin && (
+              <li className="flex items-center gap-3 py-2.5">
+                <Avatar name={data.env_admin} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 body2 text-text font-semibold">
+                    <span className="truncate">{data.env_admin}</span>
+                    <Pill sm tone="info">Admin</Pill>
+                    <Pill sm>env</Pill>
+                    {data.me_is_env_admin && <Pill tone="violet" sm>kamu</Pill>}
+                  </div>
+                  <div className="caption text-text3">Akun cadangan · ubah lewat deploy/init-user.sh</div>
+                </div>
+              </li>
+            )}
+            {adminsWithoutDivision(data.users).map((u) => (
+              <UserRow key={u.id} u={u} />
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {groupByDivision(data.users).map((g) => (
+        <Card key={g.id || "lainnya"} title={g.label} desc={`${g.users.filter((u) => u.role === "admin").length} admin · ${g.users.filter((u) => u.role !== "admin").length} member`} padSm>
+          <ul className="divide-y divide-line-soft">
+            {g.users.map((u) => <UserRow key={u.id} u={u} />)}
           </ul>
         </Card>
       ))}

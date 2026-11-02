@@ -85,12 +85,15 @@ def seed_users(engine) -> None:
             repo.set_password(engine, existing["id"], USER_PASSWORD)
         else:
             repo.create_user(engine, u, USER_PASSWORD)
-    print(f"users: {', '.join(DUMMY_USERS)} (password dari DASHBOARD_USER_DEFAULT_PASSWORD / DASHBOARD_PASSWORD)")
+    print(f"users: {len(DUMMY_USERS)} user ({DUMMY_USERS[0]} … {DUMMY_USERS[-1]}) password dari DASHBOARD_USER_DEFAULT_PASSWORD / DASHBOARD_PASSWORD")
+
+
+LEGACY_DUMMY_USERS = {"ops", "qa", "viewer"}   # nama seed lama, ikut dibersihkan
 
 
 def reset(engine) -> None:
     for x in repo.list_users(engine):
-        if x["username"] in DUMMY_USERS:
+        if x["username"] in DUMMY_USERS or x["username"] in LEGACY_DUMMY_USERS:
             repo.delete_user(engine, x["id"])
     with engine.begin() as con:
         n_acc = con.execute(delete(acc_t).where(acc_t.c.email.like(f"%@{DUMMY_DOMAIN}"))).rowcount

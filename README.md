@@ -116,7 +116,7 @@ Di compose `config.json` di-mount read-only; edit lalu `docker compose restart b
 ## Data dummy
 
 `cd backend && .venv/bin/python seed_dummy.py --reset` mengisi 14 hari run + ~150 akun `*@dummy.kling.test`
-(status campur, log bergaya RunLogger) plus user dashboard dummy `ops`, `qa`, `viewer` (daftar di `config.json` `seed.users`) dengan password
+(status campur, log bergaya RunLogger) plus 42 user dashboard (`hereacil`, `rian_herbal`, `anggie_fashion_malaysia`, … — daftar divisi yang sama dengan project intercept-google-flow, di `config.json` `seed.users`) dengan password
 `DASHBOARD_USER_DEFAULT_PASSWORD` dari `.env` (fallback `DASHBOARD_PASSWORD`). `--reset` hanya menghapus data dummy itu.
 
 ## Creator

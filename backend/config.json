@@ -2,7 +2,7 @@
   "_comment": "Konfigurasi NON-rahasia Kling Account Maker. Kredensial (password, token, URL berkredensial, proxy) tetap di .env. Prioritas: env var > config.local.json > config.json > default kode. Bagian 'defaults' hanya nilai awal tabel settings (dashboard menimpa). 'seed' = parameter seed_dummy.py.",
   "site": {
     "name": "kling",
-    "signup_url": ""
+    "signup_url": "https://kling.ai/app"
   },
   "scheduler": {
     "enabled": true

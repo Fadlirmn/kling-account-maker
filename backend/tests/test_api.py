@@ -31,7 +31,7 @@ def test_health_ok(client):
     r = client.get("/api/health")
     assert r.status_code == 200
     assert r.json()["ok"] is True and r.json()["db"] == "sqlite"
-    assert r.json()["creator_running"] is False and r.json()["flow_implemented"] is False
+    assert r.json()["creator_running"] is False and r.json()["flow_implemented"] is True
 
 
 def test_summary_kosong(client):
@@ -74,7 +74,7 @@ def test_testing_run_guard_dan_diagnostics(client, monkeypatch):
     time.sleep(0.5)
     assert calls == [("manual", 2, 1, "mailtm")]
     d = client.get("/api/test/diagnostics").json()
-    assert d["db"]["ok"] is True and d["flow"]["implemented"] is False and "proxies" in d and "email" in d
+    assert d["db"]["ok"] is True and d["flow"]["implemented"] is True and "proxies" in d and "email" in d
 
 
 def test_runs_dan_log(client, test_engine, tmp_path, monkeypatch):

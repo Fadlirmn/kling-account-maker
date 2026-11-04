@@ -62,6 +62,31 @@ async def type_react_safe(page, locator, text: str, delay: int = 80) -> bool:
         return False
 
 
+async def click_first(page, selectors: list[str], timeout: int = 4000) -> bool:
+    """Klik locator pertama yang visible dari daftar selector CSS. True jika berhasil."""
+    for sel in selectors:
+        try:
+            loc = page.locator(sel).first
+            if await loc.count() and await loc.is_visible():
+                await loc.click(timeout=timeout)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+async def fill_first(page, selectors: list[str], text: str, timeout: int = 4000) -> bool:
+    """Isi (React-safe) locator pertama yang visible dari daftar selector CSS. True jika berhasil."""
+    for sel in selectors:
+        try:
+            loc = page.locator(sel).first
+            if await loc.count() and await loc.is_visible(timeout=timeout):
+                return await type_react_safe(page, loc, text)
+        except Exception:
+            continue
+    return False
+
+
 async def _fill_boxes(page, boxes, otp: str, n: int) -> bool:
     try:
         for i, digit in enumerate(otp[:n]):

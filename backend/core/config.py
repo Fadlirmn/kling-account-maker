@@ -132,7 +132,7 @@ for _d in (DATA_DIR, COOKIES_DIR, RESULT_DIR, LOG_DIR, EXPORT_DIR):
 
 # ─── Target site ─────────────────────────────────────────────────────────────
 SITE_NAME              = _str("SITE_NAME", "site.name", "kling")
-KLING_SIGNUP_URL       = _str("KLING_SIGNUP_URL", "site.signup_url", "")   # TODO: isi setelah riset kling.ai
+KLING_SIGNUP_URL       = _str("KLING_SIGNUP_URL", "site.signup_url", "https://kling.ai/app")
 KLING_DEFAULT_PASSWORD = _env("KLING_DEFAULT_PASSWORD")                     # KREDENSIAL — .env saja
 
 # ─── Scheduler (master switch) ───────────────────────────────────────────────

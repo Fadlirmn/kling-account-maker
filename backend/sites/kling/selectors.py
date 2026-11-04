@@ -1,26 +1,44 @@
 """
 sites.kling.selectors — konstanta selector/URL/keyword halaman kling.ai.
-SEMUA masih TODO; diisi setelah riset halaman signup.
+Hasil riset manual via Playwright Codegen (2026-11-03), langsung ke https://kling.ai/app
+(skip landing page + popup "Try Now"). Belum pernah divalidasi end-to-end dengan OTP asli —
+anggap sebagai draft pertama, bukan final.
 """
-# TODO: URL fallback jika KLING_SIGNUP_URL env kosong
-SIGNUP_URL_DEFAULT = ""
 
-# TODO: tombol/link memulai signup via email
-SIGNUP_EMAIL_BTN: list[str] = []            # contoh: ['button:has-text("Sign up with email")']
+SIGNUP_URL_DEFAULT = "https://kling.ai/app"
 
-# TODO: input form
-EMAIL_INPUT: list[str] = []                 # contoh: ['input[type="email"]', 'input[name="email"]']
-PASSWORD_INPUT: list[str] = []              # contoh: ['input[type="password"]']
-SUBMIT_BTN: list[str] = []                  # contoh: ['button[type="submit"]']
+# Buka modal login/signup
+SIGNIN_OPEN_BTN: list[str] = ['text=Sign In']
 
-# TODO: form OTP / verifikasi
-OTP_FORM_KW: list[str] = []                 # teks yang menandakan halaman OTP muncul
-VERIFY_BY_LINK = False                      # True jika Kling kirim link, bukan kode
+# Pilih jalur email di modal
+SIGNUP_EMAIL_BTN: list[str] = ['text=Continue with email']
 
-# TODO: deteksi sukses login
-LOGGED_IN_URL_KW: list[str] = []            # substring URL setelah login
-AUTH_COOKIE: str = ""                       # nama cookie sesi
+# Input form
+EMAIL_INPUT: list[str] = ['input[placeholder="Enter Email Address"]']
 
-# TODO: deteksi blokir
+# Muncul setelah email diisi (blur/Tab) kalau email belum terdaftar — klik utk lanjut signup.
+# Kalau email sudah terdaftar, tombol ini tidak muncul (berarti harus login, bukan signup) —
+# belum ada test case utk alur itu.
+SIGNUP_CONFIRM_BTN: list[str] = ['text=Sign up for free']
+
+PASSWORD_INPUT: list[str] = ['input[placeholder^="Password (at least 8"]']
+CONFIRM_PASSWORD_INPUT: list[str] = ['input[placeholder="Confirm Password"]']
+SUBMIT_BTN: list[str] = ['button:has-text("Next Step")']           # submit step email+password
+
+# Form OTP / verifikasi — input generik "Verification Code" sudah tercover oleh
+# core.ui_helpers.fill_otp() (match via `input[placeholder*="code" i]`).
+OTP_FORM_KW: list[str] = ["Verification Code"]
+VERIFY_BY_LINK = False
+
+# Submit akhir setelah isi kode OTP. CATATAN: teks "Sign In" sama dengan SIGNIN_OPEN_BTN di atas —
+# kalau di halaman OTP ternyata ada 2 elemen "Sign In" (nav + tombol submit), perlu diskopin lebih
+# spesifik (mis. ke dalam modal/dialog) saat divalidasi live.
+OTP_SUBMIT_BTN: list[str] = ['button:has-text("Sign In")']
+
+# TODO: belum tervalidasi — codegen pakai OTP dummy "123456" jadi tidak sampai login sungguhan
+LOGGED_IN_URL_KW: list[str] = []
+AUTH_COOKIE: str = ""
+
+# Deteksi blokir
 CLOUDFLARE_KW: list[str] = ["Checking your browser", "cf-chl", "Ray ID", "Attention Required"]
-DOMAIN_REJECTED_KW: list[str] = []          # pesan error domain email tidak diterima
+DOMAIN_REJECTED_KW: list[str] = []   # TODO: belum ketemu kasus domain email ditolak di riset ini

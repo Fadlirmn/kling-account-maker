@@ -36,7 +36,7 @@ scheduler atau CLI.
 |------------|---------------------------------------------------------------------|-----------------------|
 | `webapp/`  | Dashboard Next.js 15 (App Router), login HMAC, proxy API            | `kling-maker/webapp`  |
 | `backend/` | FastAPI + APScheduler + engine creator (Camoufox, mail, proxy, DB)  | `kling-maker/backend` |
-| `deploy/`  | `init-user.sh`, `preflight.sh`, `setup-postgres.sh`                 | —                     |
+| `deploy/`  | `init-user.sh`, `preflight.sh`                                      | —                     |
 
 ### Stack
 
@@ -92,7 +92,7 @@ Sebelum ada akun, semua blok menampilkan `Data riil <objek> akan tampil di sini 
 │  satu batch pada satu waktu (_RUNNING), stop event           │
 └──────────────────────────────┬───────────────────────────────┘
                                │ DATABASE_URL (kosong → SQLite)
-                     PostgreSQL di host (host.docker.internal)
+                     PostgreSQL (container "postgres", docker-compose.yml)
 
 Tabel: runs · kling_accounts · banned_domains · settings · users   (models.py, metadata.create_all)
 ```
@@ -153,9 +153,8 @@ Cookies per akun: `GET /api/accounts/{id}/cookies` (tombol di dialog detail akun
 ## Production (server)
 
 ```bash
-sudo bash deploy/setup-postgres.sh            # role + DB + listen_addresses + pg_hba subnet Docker
 git clone <repo> KlingAi-Account-Maker && cd KlingAi-Account-Maker
-cp .env.example .env                          # DATABASE_URL, KLING_DEFAULT_PASSWORD, proxy (kredensial saja)
+cp .env.example .env                          # POSTGRES_*, DATABASE_URL, KLING_DEFAULT_PASSWORD, proxy (kredensial saja)
 bash deploy/init-user.sh <user> '<password>'
 python3 backend/scripts/download_geoip.py     # kalau backend/GeoLite2-City.mmdb belum ada
 bash deploy/preflight.sh
@@ -195,7 +194,7 @@ cd webapp && npm install && API_BASE_URL=http://localhost:8000 npm run dev   # h
 - **`NS_ERROR_NET_INTERRUPT` / browser gagal launch** → `backend/GeoLite2-City.mmdb` hilang (mount jadi directory) atau proxy mati; `preflight.sh` mengecek.
 - **Firefox crash / heap corruption** → turunkan `browser_concurrency` di Settings; `shm_size` 1gb sudah di compose.
 - **Semua proxy blacklist** → cooldown `PROXY_BAD_COOLDOWN` (300 s); run tetap lanjut tanpa proxy dengan WARN.
-- **PostgreSQL tidak konek dari container** → `DATABASE_URL` harus `host.docker.internal`; cek `pg_hba` subnet Docker (`setup-postgres.sh`).
+- **PostgreSQL tidak konek dari container** → `DATABASE_URL` harus pakai host service-name `postgres` (bukan `localhost`/`host.docker.internal`); cek `docker compose logs postgres` dan `POSTGRES_USER/PASSWORD/DB` di `.env`.
 
 ## Catatan
 

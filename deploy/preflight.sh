@@ -23,8 +23,12 @@ if [ -f .env ]; then
   if [ -z "$db" ]; then warn "DATABASE_URL kosong → pakai SQLite backend/data/kling_accounts.db";
   elif echo "$db" | grep -Eq '^postgres(ql)?://[^:]+:[^@]+@[^/]+/[^ ]+$'; then
     echo "$db" | grep -q "YOUR_" && fail "DATABASE_URL masih placeholder" || ok "DATABASE_URL format valid"
-    echo "$db" | grep -q "@localhost\|@127.0.0.1" && warn "DATABASE_URL pakai localhost — dari container harus host.docker.internal"
+    echo "$db" | grep -q "@localhost\|@127.0.0.1\|@host.docker.internal" && warn "DATABASE_URL pakai localhost/host.docker.internal — dari container backend harus service-name 'postgres' (lihat docker-compose.yml)"
   else fail "DATABASE_URL format salah (harus postgresql://user:pass@host:5432/db)"; fi
+  pgpass=$(envval POSTGRES_PASSWORD)
+  if [ -n "$db" ] && echo "$db" | grep -q "@postgres:"; then
+    [ -n "$pgpass" ] && ! echo "$pgpass" | grep -q "YOUR_" && ok "POSTGRES_PASSWORD terisi (container postgres)" || fail "POSTGRES_PASSWORD belum diisi di .env (dipakai container postgres)"
+  fi
   port=3201; api_port=8010   # fixed di docker-compose.yml
   u=$(envval DASHBOARD_USER); pw=$(envval DASHBOARD_PASSWORD); sec=$(envval AUTH_SECRET)
   if [ -z "$u" ] || [ -z "$pw" ] || echo "$pw" | grep -q "YOUR_"; then fail "DASHBOARD_USER/DASHBOARD_PASSWORD belum diisi → bash deploy/init-user.sh <user> <password>";
@@ -81,15 +85,13 @@ docker compose config --quiet 2>/tmp/preflight_err && ok "docker-compose.yml + .
 
 echo "== PostgreSQL (dari container) =="
 if [ -n "${db:-}" ]; then
-  pgurl=$(echo "$db" | sed -E 's|^postgres(ql)?(\+psycopg)?://|postgresql://|')
   if docker image inspect kling-maker/backend >/dev/null 2>&1; then
     out=$(timeout 25 docker compose run --rm --no-deps -T --entrypoint python backend db.py 2>&1 | tail -1)
-    echo "$out" | grep -q "^OK postgresql" && ok "$out" || fail "DB tidak bisa diakses dari container: ${out:-timeout} → cek deploy/setup-postgres.sh"
+    echo "$out" | grep -q "^OK postgresql" && ok "$out" || fail "DB tidak bisa diakses dari container: ${out:-timeout} → cek service 'postgres' (docker compose up -d postgres; docker compose logs postgres)"
   else
-    out=$(timeout 40 docker run --rm --add-host host.docker.internal:host-gateway -e PGCONNECT_TIMEOUT=8 \
-          postgres:16-alpine psql "$pgurl" -tAc "select version()" 2>&1 | tail -1)
-    echo "$out" | grep -q "^PostgreSQL" && ok "DB reachable dari container: $out" \
-      || fail "DB tidak bisa diakses dari container: ${out:-timeout} → cek deploy/setup-postgres.sh (pg_hba 172.16.0.0/12, listen_addresses)"
+    out=$(timeout 25 docker compose up -d postgres 2>&1 | tail -1; docker compose exec -T postgres pg_isready -U "$(envval POSTGRES_USER)" -d "$(envval POSTGRES_DB)" 2>&1 | tail -1)
+    echo "$out" | grep -q "accepting connections" && ok "postgres container: $out" \
+      || fail "postgres container belum siap: ${out:-timeout} → docker compose logs postgres"
   fi
 fi
 

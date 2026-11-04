@@ -75,6 +75,48 @@ class WebhookMail(MailClient):
         return ""
 
 
+def webhook_simulate(email: str, otp: Optional[str] = None) -> tuple[bool, dict]:
+    """Testing: simulasikan email OTP masuk ke receiver (POST /webhook/email) tanpa kirim email asli."""
+    if not config.CLOUDFLARE_WORKER_URL:
+        return False, {"message": "CLOUDFLARE_WORKER_URL kosong"}
+    otp = otp or "".join(random.choices(string.digits, k=6))
+    try:
+        r = requests.post(
+            f"{config.CLOUDFLARE_WORKER_URL}/webhook/email",
+            json={"to": email, "subject": "Kling AI verification code (test)",
+                  "body": f"Your Kling verification code is {otp}. This code expires in 10 minutes."},
+            timeout=10,
+        )
+        data = r.json() if r.content else {}
+        return r.status_code == 200 and data.get("status") == "success", data
+    except Exception as e:
+        return False, {"message": str(e)}
+
+
+def webhook_peek(email: str) -> dict:
+    """Testing: lihat status OTP tersimpan di receiver tanpa menghapusnya (GET /peek)."""
+    if not config.CLOUDFLARE_WORKER_URL:
+        return {"ok": False, "message": "CLOUDFLARE_WORKER_URL kosong"}
+    try:
+        r = requests.get(f"{config.CLOUDFLARE_WORKER_URL}/peek", params={"email": email}, timeout=10)
+        data = r.json() if r.content else {}
+        return {"ok": r.status_code == 200, **data}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
+
+
+def webhook_stats() -> dict:
+    """Testing: riwayat/statistik email yang diterima receiver, semua service (GET /stats)."""
+    if not config.CLOUDFLARE_WORKER_URL:
+        return {"ok": False, "message": "CLOUDFLARE_WORKER_URL kosong"}
+    try:
+        r = requests.get(f"{config.CLOUDFLARE_WORKER_URL}/stats", timeout=10)
+        data = r.json() if r.content else {}
+        return {"ok": r.status_code == 200, **data}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
+
+
 def webhook_health() -> tuple[bool, str]:
     """Cek /health receiver Cloudflared_webhook (dipakai diagnosa). Return (ok, pesan)."""
     if not config.CLOUDFLARE_WORKER_URL:

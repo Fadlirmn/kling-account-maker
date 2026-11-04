@@ -1,4 +1,23 @@
 services:
+  # ---------- PostgreSQL (opsional; DATABASE_URL kosong di .env → backend fallback SQLite) ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: kling-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kling_maker}
+      POSTGRES_USER: ${POSTGRES_USER:-kling}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD belum diisi di .env}
+    volumes:
+      - ./backend/data/postgres:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"   # 5433 di host (5432 dipakai postgres native laptop); akses dari luar: psql -p 5433
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kling} -d ${POSTGRES_DB:-kling_maker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ---------- Backend: FastAPI + APScheduler + creator (Camoufox/Firefox di Xvfb) ----------
   # API di 127.0.0.1:8010 (internal: http://backend:8000). Port & nama app di file ini, bukan .env.
   # Batch harian (settings.schedule_time, default 03:00 WIB) + isi ulang pool standby
@@ -11,6 +30,9 @@ services:
     container_name: kling-backend
     init: true
     env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       TZ: Asia/Jakarta
       DATABASE_URL: ${DATABASE_URL:-}
@@ -90,6 +112,9 @@ services:
     container_name: kling-creator
     profiles: ["creator"]
     env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       TZ: Asia/Jakarta
       DATABASE_URL: ${DATABASE_URL:-}

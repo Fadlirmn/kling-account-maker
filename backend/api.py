@@ -512,6 +512,49 @@ def test_mail(body: dict | None = None):
     return {"ok": True, "provider": client.mode, "email": client.email, "skipped": sorted(disabled), "ms": ms}
 
 
+def _require_kling_prefix(email: str) -> str:
+    email = (email or "").strip().lower()
+    if "@" not in email:
+        raise HTTPException(status_code=422, detail="Email tidak valid")
+    if not email.startswith(config.EMAIL_PREFIX):
+        raise HTTPException(status_code=422, detail=f"Email harus berawalan '{config.EMAIL_PREFIX}' (prefix lain diroute ke service lain di receiver)")
+    return email
+
+
+@app.post("/api/test/mail/custom")
+def test_mail_custom(body: dict):
+    """Testing provider webhook pakai email custom: simulasikan 1 OTP masuk lalu cek statusnya (peek, tidak dihapus)."""
+    if config.EMAIL_PROVIDER != "webhook" or not config.CLOUDFLARE_WORKER_URL:
+        raise HTTPException(status_code=422, detail="Provider aktif bukan webhook / CLOUDFLARE_WORKER_URL kosong")
+    email = _require_kling_prefix((body or {}).get("email", ""))
+    otp = (body or {}).get("otp") or None
+    if otp is not None and (not isinstance(otp, str) or not otp.isdigit() or len(otp) != 6):
+        raise HTTPException(status_code=422, detail="otp harus 6 digit angka")
+    from core.mail.webhook import webhook_simulate, webhook_peek
+    ok, sim = webhook_simulate(email, otp)
+    peek = webhook_peek(email)
+    return {"ok": ok, "email": email, "simulate": sim, "peek": peek}
+
+
+@app.get("/api/test/mail/peek")
+def test_mail_peek(email: str = Query(...)):
+    """Testing: lihat status OTP email custom di receiver tanpa menghapusnya."""
+    if not config.CLOUDFLARE_WORKER_URL:
+        raise HTTPException(status_code=422, detail="CLOUDFLARE_WORKER_URL kosong")
+    email = _require_kling_prefix(email)
+    from core.mail.webhook import webhook_peek
+    return webhook_peek(email)
+
+
+@app.get("/api/test/mail/stats")
+def test_mail_stats():
+    """Testing: riwayat/statistik email yang diterima receiver Cloudflared_webhook (semua service)."""
+    if not config.CLOUDFLARE_WORKER_URL:
+        raise HTTPException(status_code=422, detail="CLOUDFLARE_WORKER_URL kosong")
+    from core.mail.webhook import webhook_stats
+    return webhook_stats()
+
+
 # ── routes: settings ─────────────────────────────────────────────────────────
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 _INT_RANGES = (("workers", 1, 16), ("batch_size", 1, 500), ("max_daily_success", 1, 100000),

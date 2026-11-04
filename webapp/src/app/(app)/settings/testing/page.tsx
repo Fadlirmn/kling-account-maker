@@ -23,6 +23,10 @@ interface Diagnostics {
   last_run: Run | null;
 }
 type MailTest = { ok: boolean; provider: string | null; email?: string; skipped?: string[]; tried_failed?: string[]; ms: number };
+type PeekResult = { ok?: boolean; status?: string; otp?: string; created_at?: string; service?: string; message?: string };
+type CustomMailTest = { ok: boolean; email: string; simulate: { status?: string; otp?: string; service?: string; message?: string }; peek: PeekResult };
+type ServiceStat = { total: number; active: number; expired: number; recent: { email: string; at: string }[] };
+type MailStats = { ok?: boolean; timestamp?: string; message?: string; services?: Record<string, ServiceStat> };
 
 const num = (v: string, lo: number, hi: number) => Math.max(lo, Math.min(hi, Number(v) || lo));
 const okPill = (ok: boolean, yes = "OK", no = "Gagal") => <Pill sm tone={ok ? "success" : "err"}>{ok ? yes : no}</Pill>;
@@ -35,8 +39,12 @@ export default function TestingPage() {
   const [count, setCount] = useState(1);
   const [workers, setWorkers] = useState(1);
   const [provider, setProvider] = useState<EmailProvider | "">("");
-  const [busy, setBusy] = useState<"run" | "mail" | "diag" | null>(null);
+  const [busy, setBusy] = useState<"run" | "mail" | "diag" | "custom" | "peek" | "stats" | null>(null);
   const [mail, setMail] = useState<MailTest | null>(null);
+  const [customEmail, setCustomEmail] = useState("");
+  const [customOtp, setCustomOtp] = useState("");
+  const [custom, setCustom] = useState<CustomMailTest | null>(null);
+  const [stats, setStats] = useState<MailStats | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const flash = (ok: boolean, text: string) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
@@ -79,6 +87,32 @@ export default function TestingPage() {
     const r = await apiPost<MailTest>("/test/mail", provider ? { provider } : {});
     setMail(r.data ?? { ok: false, provider, ms: 0, tried_failed: [] });
     if (!r.data) flash(false, r.error ?? "Gagal menguji provider");
+    setBusy(null);
+  };
+
+  const simulateCustom = async () => {
+    if (!customEmail.trim()) return flash(false, "Isi email dulu");
+    setBusy("custom");
+    const r = await apiPost<CustomMailTest>("/test/mail/custom", { email: customEmail.trim(), otp: customOtp.trim() || undefined });
+    setCustom(r.data);
+    if (!r.data) flash(false, r.error ?? "Gagal simulasi email");
+    setBusy(null);
+  };
+
+  const peekCustom = async () => {
+    if (!customEmail.trim()) return flash(false, "Isi email dulu");
+    setBusy("peek");
+    const r = await apiGet<PeekResult>(`/test/mail/peek?email=${encodeURIComponent(customEmail.trim())}`);
+    setCustom((c) => (c ? { ...c, peek: r ?? { message: "Gagal cek status" } } : { ok: false, email: customEmail.trim(), simulate: {}, peek: r ?? { message: "Gagal cek status" } }));
+    if (!r) flash(false, "Gagal cek status email");
+    setBusy(null);
+  };
+
+  const loadStats = async () => {
+    setBusy("stats");
+    const r = await apiGet<MailStats>("/test/mail/stats");
+    setStats(r);
+    if (!r) flash(false, "Gagal memuat riwayat email");
     setBusy(null);
   };
 
@@ -153,6 +187,55 @@ export default function TestingPage() {
             {!!mail.tried_failed?.length && <KV k="Semua gagal" v={mail.tried_failed.join(", ")} />}
             <KV k="Waktu" v={`${mail.ms} ms`} />
           </div>
+        )}
+      </Card>
+
+      <Card title="Uji email custom (webhook)" desc="Simulasikan OTP masuk untuk alamat tertentu ke receiver Cloudflared_webhook — tanpa kirim email asli">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3.5">
+          <div className="sm:col-span-2">
+            <Field label="Email" hint={`Wajib berawalan prefix email provider (mis. kling_...)`}>
+              <input type="text" className="input" placeholder="kling_contoh@domain.biz.id" value={customEmail} onChange={(e) => setCustomEmail(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="OTP" hint="6 digit, kosong = acak">
+            <input type="text" inputMode="numeric" maxLength={6} className="input" placeholder="123456" value={customOtp} onChange={(e) => setCustomOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+          </Field>
+        </div>
+        <div className="card-actions">
+          <Button variant="outlined" icon="mark_email_read" spin={busy === "peek"} disabled={busy !== null} onClick={peekCustom}>Cek status (peek)</Button>
+          <Button variant="primary" icon="send" spin={busy === "custom"} disabled={busy !== null} onClick={simulateCustom}>Simulasikan OTP masuk</Button>
+        </div>
+        {custom && (
+          <div className="box !gap-0 !py-1 mt-4">
+            <KV k="Email diuji" v={<span className="font-mono text-[12.5px] break-all">{custom.email}</span>} />
+            <KV k="Simulasi kirim" v={custom.simulate?.status ? <span className="inline-flex items-center gap-2">{okPill(custom.simulate.status === "success")} <span className="caption text-text3">OTP {custom.simulate.otp ?? "—"} · {custom.simulate.service ?? ""}</span></span> : (custom.simulate?.message ?? "—")} />
+            <KV k="Status di receiver (peek)" v={custom.peek?.status ? <span className="inline-flex items-center gap-2">{okPill(custom.peek.status === "found")} <span className="caption text-text3">{custom.peek.status === "found" ? `OTP ${custom.peek.otp} · ${fmtDateTime(custom.peek.created_at)}` : custom.peek.status}</span></span> : (custom.peek?.message ?? "—")} />
+          </div>
+        )}
+      </Card>
+
+      <Card title="Riwayat email diterima (receiver)" desc="Statistik langsung dari Cloudflared_webhook — OTP yang belum diambil tetap terhitung, yang sudah diambil hilang (one-time)"
+        actions={<Button variant="outlined" size="sm" icon="refresh" spin={busy === "stats"} disabled={busy !== null} onClick={loadStats}>Refresh</Button>}>
+        {!stats ? (
+          <span className="caption text-text3">Klik Refresh untuk memuat</span>
+        ) : stats.services?.kling ? (
+          <div className="box !gap-0 !py-1">
+            <KV k="Terakhir dicek" v={stats.timestamp ?? "—"} />
+            <KV k="Kling — total / aktif / kedaluwarsa" v={`${stats.services.kling.total} / ${stats.services.kling.active} / ${stats.services.kling.expired}`} />
+            {stats.services.kling.recent.length ? (
+              <KV k="3 email terakhir" v={
+                <div className="flex flex-col gap-0.5">
+                  {stats.services.kling.recent.map((r, i) => (
+                    <span key={i} className="caption text-text3 font-mono break-all">{r.email} · {fmtDateTime(r.at)}</span>
+                  ))}
+                </div>
+              } />
+            ) : (
+              <KV k="3 email terakhir" v="—" />
+            )}
+          </div>
+        ) : (
+          <span className="caption text-text3">{stats.message ?? "Tidak ada data"}</span>
         )}
       </Card>
     </div>
